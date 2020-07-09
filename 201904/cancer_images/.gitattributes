@@ -1,0 +1,7 @@
+type0 filter=lfs diff=lfs merge=lfs -text
+type1 filter=lfs diff=lfs merge=lfs -text
+type2 filter=lfs diff=lfs merge=lfs -text
+type3 filter=lfs diff=lfs merge=lfs -text
+type4 filter=lfs diff=lfs merge=lfs -text
+type5 filter=lfs diff=lfs merge=lfs -text
+typeB filter=lfs diff=lfs merge=lfs -text

@@ -1,0 +1,12 @@
+version: '2'
+services:
+  MDS:
+    image: pycaret_jupyter
+    volumes:
+      - .:/data
+    working_dir: /data
+    tty: true
+    ports:
+      - "8888:8888"
+    command: >
+      jupyter lab --port 8888 --ip 0.0.0.0 --allow-root
