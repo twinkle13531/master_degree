@@ -1,4 +1,4 @@
-# my master_degree study
+# my master degree study
 selective inference
 
 ## What I did
