@@ -27,4 +27,4 @@ selective inference
 202006 : Merge pull request #3 from twinkle13531/develop
 
 ## other project
-php_html_intern : take part in coding intern to study php and html
+php & html internship : take part in coding intern to study php and html
