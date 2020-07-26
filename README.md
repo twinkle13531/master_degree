@@ -24,7 +24,8 @@ selective inference
 
 202005 : do Population Annealing
 
-202006 : Merge pull request #3 from twinkle13531/develop
+202006 : calculate Hamiltonian to do SAT or qubo, adjust ground state energy as 0, change dataset
+
 
 ## other project
 php & html internship : take part in coding intern to study php and html
