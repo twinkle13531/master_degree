@@ -8,7 +8,7 @@ selective inference
 
 201907 : try KLDivergence and USetR
 
-201908 : study Simple Particle Swarm Optimization and mutual information and h…
+201908 : study Simple Particle Swarm Optimization and mutual information and held reading session
 
 201909 : study Selective Inference
 
@@ -18,7 +18,7 @@ selective inference
 
 202002 : do Replica Exchange method using wheat data
 
-202003 : making breast cancer dataset and do Population Annlealing with small …
+202003 : making breast cancer dataset and do Population Annlealing with small data
 
 202004 : do wrong Population Annealing
 
