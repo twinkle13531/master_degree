@@ -1,6 +1,6 @@
 version: '2'
 services:
-  MDS:
+  master:
     image: pycaret_jupyter
     volumes:
       - .:/data
