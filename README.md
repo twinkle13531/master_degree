@@ -26,6 +26,9 @@ selective inference
 
 202006 : calculate Hamiltonian to do SAT or qubo, adjust ground state energy as 0, change dataset
 
+202007 : make or use SAT solver, make mushroom dataset
+
+202008 : try exact logistic regression
 
 ## other project
 php & html internship : take part in coding intern to study php and html
