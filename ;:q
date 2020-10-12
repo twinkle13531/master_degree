@@ -1,0 +1,14 @@
+FROM ubuntu:bionic
+RUN apt update \
+&& apt install -y python3 python3-pip \
+&& apt-get clean \
+&& apt-get isntall wget\
+&& rm -rf /var/lib/apt/lists/*
+RUN pip3 install \
+pycaret==1.0.0 \
+jupyterlab==2.1.4
+
+# pipインストール(最新版)
+RUN wget https://bootstrap.pypa.io/get-pip.py
+RUN python get-pip.py 
+RUN pip install pyqubo==0.4.0
