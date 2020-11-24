@@ -1,0 +1,44 @@
+(master)⚡ % zsolve system                                                                                                                    ~/src/github.com/twinkle13531/master_degree/202010/4ti2/system
+-------------------------------------------------
+4ti2 version 1.6.9
+Copyright 1998, 2002, 2006, 2015 4ti2 team.
+4ti2 comes with ABSOLUTELY NO WARRANTY.
+This is free software, and you are welcome
+to redistribute it under certain conditions.
+For details, see the file COPYING.
+-------------------------------------------------
+
+Using 32 bit integers.
+
+Linear system to solve:
+
+ +  +
+ -  -
+ F  F
+
+ 1 -1 <= 2
+-3  1 <= 1
+ 1  1 >= 1
+
+Linear system of homogeneous equalities to solve:
+
+ +  + + +  +  1
+ -  - 0 0  0  0
+ F  F H H  H  B
+
+ 1 -1 1 0  0 -2 = 0
+-3  1 0 1  0 -1 = 0
+ 1  1 0 0 -1 -1 = 0
+
+Lattice:
+
++ +  +  +  + 1
+- -  0  0  0 0
+F F  H  H  H B
+
+1 0 -1  3  1 0
+0 1  1 -1  1 0
+0 0  2  1 -1 1
+
+
+Final basis has 4 inhomogeneous, 3 homogeneous and 0 free elements. Time:  0.00s
