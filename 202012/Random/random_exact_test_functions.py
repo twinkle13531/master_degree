@@ -78,7 +78,7 @@ class Random_method:
         if self.valid_y_num > 0:
             return p_num/self.valid_y_num
         else:
-            messa = "can't calucurate p value"
+            messa = "can't calculate p value"
             return messa
     
     def p_value_transition(self, output_path):
