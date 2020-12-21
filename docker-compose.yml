@@ -1,7 +1,7 @@
 version: '2'
 services:
   master:
-    image: pycaret_jupyter
+    image: qubit
     volumes:
       - .:/data
     working_dir: /data
