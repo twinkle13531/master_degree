@@ -211,7 +211,8 @@ class QA_DSampler_AEmbedding:
 
 # occurance_list = [int(valid_y_info[2]) for valid_y_info in valid_y_info_list]
 
-def occurance_hist(valid_y_info_list, plot_path):
+def occurrence_hist(valid_y_info_list, plot_path):
+    x = [i for i in range(len(valid_y_info_list))]
     occurance_list = [int(valid_y_info[2]) for valid_y_info in valid_y_info_list]
     plt.xlabel('each sample')
     plt.ylabel('number of the occurence')
@@ -224,7 +225,7 @@ def occurance_hist(valid_y_info_list, plot_path):
 
     return occurance_list
     
-def occurence_hist_neal(occurrence_list, plot_path):
+def occurrence_hist_neal(occurrence_list, plot_path):
     x = [i for i in range(len(occurrence_list))]
     plt.xlabel('each sample')
     plt.ylabel('number of the occurrence')
@@ -246,6 +247,6 @@ def p_value(df, valid_y_info_list):
     valid_y_num = len(valid_y_info_list)
     if valid_y_num > 0:
         return p_num/valid_y_num
-    #else:
-        #messa = "can't calculate p value"
-        #return messa
+    else:
+        messa = "can't calculate p value"
+        return messa
