@@ -64,48 +64,43 @@ def make_Hamiltonian(df):
 
     return dimod.BinaryQuadraticModel(lin, quad, num, dimod.Vartype.BINARY)#dic, dic, num
 
-
-#time_once = timeit.timeit("make_Hamiltonian(df)", globals=globals(), number=1)
-
 ###############################################################################
 class QA_DSampler_AEmbedding:
-    def __init__(self, df, bqm, time_once, n, num_reads, chain_strength):
+    def __init__(self, df, bqm, n, num_reads, chain_strength):
         self.df = df
         self.bqm = bqm
-        self.time_once = time_once
         self.n = n
         self.num_reads = num_reads
         self.chain_strength = chain_strength
-        
-         
-    def find_valid_y_ntimes(self):
-        df_list_list = []
+    
+    #tuple(sample.values())が有効だとわかった
+    def trial_(self):
+        valid_y_info_dic = {}#sample:[occurrences, chain_break_fraction]
+        res = qa_sampler.sample(self.bqm, chain_strength = self.chain_strength, chain_break_fraction=True, num_reads=self.num_reads)
+        time_0 = time.time()
         for _ in range(self.n):
-            res = qa_sampler.sample(self.bqm, chain_strength=self.chain_strength, chain_break_fraction=True, num_reads=self.num_reads)
             for sample, energy, num_occurrences, chain_break_fraction in res.data(['sample', 'energy', 'num_occurrences', 'chain_break_fraction']):
-                df_list_list.append([list(sample.values()), energy, num_occurrences, chain_break_fraction])
-
-        valid_y_info_list = []
-        valid_y_num = 0    
-        for df_list in df_list_list:
-            if df_list[1] == 0.0:
-                valid_y_num += 1                                        
-                valid_y_info_list.append(df_list)
-
-        return  valid_y_info_list, valid_y_num
-    
-    
-    def make_result_df(valid_y_info_list, save_path):
-        cols = ['sample', 'energy', 'num_occurrences', 'chain_break_fraction']
-        valid_y_info_df = pd.DataFrame(index=[], columns=cols)
-
-        for valid_y_info in valid_y_info_list:
-            if all(valid_y_info[0] != p for p in valid_y_info_df['sample'].values.tolist()):
-                record = pd.Series(valid_y_info, index=valid_y_info_df.columns)
-                valid_y_info_df = valid_y_info_df.append(record, ignore_index=True)
-
-        valid_y_info_df.to_csv(save_path)
-        return valid_y_info_df
+                sample_tuple = tuple(sample.values())
+                print(sample_tuple)
+                
+    def find_valid_y_time_ntimes(self):
+        valid_y_info_dic = {}#sample:[occurrences, chain_break_fraction]
+        calculation_time = 0
+        for _ in range(self.n):
+            res = qa_sampler.sample(self.bqm, chain_strength = self.chain_strength, chain_break_fraction=True, num_reads=self.num_reads)#annealing_time
+            time_0 = time.time()
+            for sample, energy, num_occurrences, chain_break_fraction in res.data(['sample', 'energy', 'num_occurrences', 'chain_break_fraction']):
+                sample_tuple = tuple(sample.values())
+                if energy == 0.0:
+                    if sample_tuple in list(valid_y_info_dic.keys()):
+                        valid_y_info_dic[sample_tuple][0] += num_occurrences
+                    else:
+                        valid_y_info_dic[sample_tuple] = [num_occurrences, chain_break_fraction]
+                time_1 = time.time()
+                #print('here')
+                calculation_time += time_1 - time_0 + 20*10**(-6)
+        
+        return  valid_y_info_dic, calculation_time
 
 
     def y_num_t1_hist(self, valid_y_info_list, plot_path):
@@ -141,8 +136,8 @@ class QA_DSampler_AEmbedding:
         valid_y_list= []                                                           
         valid_y_num= 0
         for _ in range(self.n):
-            res = qa_sampler.sample(self.bqm, chain_strength = self.chain_strength, chain_break_fraction=True, num_reads=self.num_reads)
-            for y_info in list(res.record):
+            #res = qa_sampler.sample(self.bqm, chain_strength = self.chain_strength, chain_break_fraction=True, num_reads=self.num_reads)
+            for y_info in list(self.res.record):
                 if y_info[1]==0.:
                     if len(valid_y_list)==0:
                         valid_y_list.append(list(y_info[0]))
@@ -171,16 +166,15 @@ class QA_DSampler_AEmbedding:
 
 
     def p_value_transition(self, valid_y_info_list, output_path) :
-        bqm = make_Hamiltonian(self.df)
         t1 = int(np.dot(self.df['Y'], self.df['LI']))
         t1_y = 0
         p_dic = {}
 
         valid_y_num= 0
         valid_y_list = []
+        res = qa_sampler.sample(self.bqm, chain_strength = self.chain_strength, chain_break_fraction=True, num_reads=self.num_reads)
         for _ in range(self.n):
             valid_y_info_list = []
-            res = qa_sampler.sample(self.bqm, chain_strength = self.chain_strength, chain_break_fraction=True, num_reads=self.num_reads)
             for sample, energy, num_occurrences, chain_break_fraction in res.data(['sample', 'energy', 'num_occurrences', 'chain_break_fraction']):
                 valid_y_info_list.append([list(sample.values()), energy, num_occurrences, chain_break_fraction])
 
@@ -202,11 +196,7 @@ class QA_DSampler_AEmbedding:
         plt.close()
 
         return valid_y_num, valid_y_list, p_dic
-    
-    def time_measurement(self):
-        annealing_times = 20*10**-6*self.n
-        sum_time = annealing_times + self.time_once
-        return sum_time
+
 ###############################################################################
 
 # occurance_list = [int(valid_y_info[2]) for valid_y_info in valid_y_info_list]

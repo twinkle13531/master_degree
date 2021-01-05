@@ -55,7 +55,7 @@ def make_Hamiltonian(df):
     
     return dimod.BinaryQuadraticModel(lin, quad, num, dimod.Vartype.BINARY)#dic, dic, num
 
-
+#make_res_dataとfind_valid_y(res)を合わせた時間をcalculation_timeとする
 def make_res_data(df, num_reads):
     sa_sampler = neal.sampler.SimulatedAnnealingSampler()
     initial_states = df['Y'].values.tolist()
@@ -68,22 +68,30 @@ def make_res_data(df, num_reads):
     return res
 
 def find_valid_y(res):                                                        
+    valid_y_info_dic = {}#sample:occurrence
+    for y_info in list(res.record):
+        if y_info[1]==0.:#energy
+            this_time_y = tuple(y_info[0])#sample
+            if this_time_y in list(valid_y_info_dic.keys()):
+                valid_y_info_dic[this_time_y] += y_info[2]#occurrence
+            else:
+                valid_y_info_dic[this_time_y] = y_info[2]
+    return valid_y_info_dic
+
+def calc_p_value(df, res):                                                        
     valid_y_list= []                                                           
     valid_y_num= 0
-    occurrence_list = []
-    this_time_y_list = []
+    t1_y = 0
+    t1 = np.dot(df['Y'], df['LI'])
     for y_info in list(res.record):
         if y_info[1]==0.:
-            this_time_y = list(y_info[0])
-            if all([this_time_y != p for p in valid_y_list]): 
-                valid_y_list.append(this_time_y)
+            valid_y = list(y_info[0]) 
+            if all(valid_y != p for p in valid_y_list):
                 valid_y_num += 1
-                occurrence_list.append(1)
-                this_time_y_list.append(this_time_y)
-            else:
-                i = this_time_y_list.index(this_time_y)
-                occurrence_list[i] += 1
-    return valid_y_list, valid_y_num, occurrence_list
+                valid_y_list.append(valid_y)
+                if int(np.dot(valid_y, list(df['LI'])))==t1:
+                    t1_y += 1
+    return t1_y/valid_y_num
 
 def y_num_hist(df, valid_y_list, path):
     LI = list(df['LI'])
