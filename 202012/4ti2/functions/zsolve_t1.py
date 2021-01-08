@@ -35,6 +35,7 @@ def y_num_hist(df, zinhom_list, output_path):
         else:
             hist_dic[t1] = 1
 
+    real_t1 = np.dot(df['Y'], df['LI'])
     x = [i for i in list(hist_dic.keys())]
     y = [i for i in list(hist_dic.values())]
     plt.xlabel('value of t1')
@@ -42,8 +43,10 @@ def y_num_hist(df, zinhom_list, output_path):
     plt.bar(x, y)
     plt.xticks(x, x)
     plt.yticks(y, y)
+    plt.plot(real_t1, 0, marker='o', markersize=20)
     plt.savefig(output_path)
     plt.show()
+    plt.close()
     
     return hist_dic
 
