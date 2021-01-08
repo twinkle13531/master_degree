@@ -8,7 +8,7 @@ import itertools
 import random
 import matplotlib.pyplot as plt
 from dwave.system.samplers import DWaveSampler
-from dwave.system.composites import AutoEmbeddingComposite
+from dwave.system.composites import AutoEmbeddingComposite, EmbeddingComposite
 from dwave.embedding.chain_strength import uniform_torque_compensation
 import dimod
 import timeit
@@ -23,6 +23,7 @@ dw_sampler = DWaveSampler(
     )
 # インスタンス作成
 qa_sampler = AutoEmbeddingComposite(dw_sampler)
+e_qa_sampler = EmbeddingComposite(dw_sampler)
 
 def calc_marginals(df):
         return np.array([                      
@@ -74,15 +75,29 @@ class QA_DSampler_AEmbedding:
         self.chain_strength = chain_strength
     
     #tuple(sample.values())が有効だとわかった
-    def trial_(self):
-        valid_y_info_dic = {}#sample:[occurrences, chain_break_fraction]
+    def sample_(self):
         res = qa_sampler.sample(self.bqm, chain_strength = self.chain_strength, chain_break_fraction=True, num_reads=self.num_reads)
-        time_0 = time.time()
+        return res
+        
+    def e_find_valid_y_time_ntimes(self):
+        valid_y_info_dic = {}#sample:[occurrences, chain_break_fraction]
+        calculation_time = 0
         for _ in range(self.n):
+            res = e_qa_sampler.sample(self.bqm, chain_strength = self.chain_strength, chain_break_fraction=True, num_reads=self.num_reads)#annealing_time
+            time_0 = time.time()
             for sample, energy, num_occurrences, chain_break_fraction in res.data(['sample', 'energy', 'num_occurrences', 'chain_break_fraction']):
                 sample_tuple = tuple(sample.values())
-                print(sample_tuple)
-                
+                if energy == 0.0:
+                    if sample_tuple in list(valid_y_info_dic.keys()):
+                        valid_y_info_dic[sample_tuple][0] += num_occurrences
+                    else:
+                        valid_y_info_dic[sample_tuple] = [num_occurrences, chain_break_fraction]
+                time_1 = time.time()
+                #print('here')
+                calculation_time += time_1 - time_0 + 20*10**(-6)
+        
+        return  valid_y_info_dic, calculation_time
+    
     def find_valid_y_time_ntimes(self):
         valid_y_info_dic = {}#sample:[occurrences, chain_break_fraction]
         calculation_time = 0
@@ -103,12 +118,12 @@ class QA_DSampler_AEmbedding:
         return  valid_y_info_dic, calculation_time
 
 
-    def y_num_t1_hist(self, valid_y_info_list, plot_path):
+    def y_num_t1_hist(self, valid_y_info_dic, plot_path):
         LI = list(self.df['LI'])
         hist_dic = {}
 
-        for valid_y_info in valid_y_info_list:
-            valid_y = valid_y_info[0]
+        for valid_y_info in list(valid_y_info_dic.keys()):
+            valid_y = list(valid_y_info)
             t1 = int(np.dot(LI, valid_y))
             if t1 in hist_dic.keys():
                 hist_dic[t1] += 1
@@ -123,6 +138,7 @@ class QA_DSampler_AEmbedding:
         plt.xticks(x, x)
         plt.yticks(y, y)
         plt.savefig(plot_path)
+        plt.plot(t1, 0)
         plt.show()
         plt.close()
 
@@ -136,7 +152,7 @@ class QA_DSampler_AEmbedding:
         valid_y_list= []                                                           
         valid_y_num= 0
         for _ in range(self.n):
-            #res = qa_sampler.sample(self.bqm, chain_strength = self.chain_strength, chain_break_fraction=True, num_reads=self.num_reads)
+            res = qa_sampler.sample(self.bqm, chain_strength = self.chain_strength, chain_break_fraction=True, num_reads=self.num_reads)
             for y_info in list(self.res.record):
                 if y_info[1]==0.:
                     if len(valid_y_list)==0:
