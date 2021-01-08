@@ -10,17 +10,19 @@ import time
 def calc_marginals(df):                   
     return np.array([                      
         sum(df['Y']),                     
-        np.dot(df['Y'], df['LI']),      
+        np.dot(df['Y'], df['LI']),  #1    
         np.dot(df['Y'], df['SEX']),      
         np.dot(df['Y'], df['AOP']),      
     ])                               
 
-#t_list = calc_marginals(df)
+t_list = calc_marginals(df)
 
+#calculate_timeはこの関数を計測
 def find_valid_y(df, num_reads):    
     t_list = calc_marginals(df)
     valid_y_num= 0
-    valid_y_list = []
+    valid_y_dic = {}
+    time_0 = time.time()
     y_lists = np.random.randint(2, size=(num_reads, df.shape[0])) #random                                
     for canditate_y in y_lists:                                                     
         if sum(canditate_y) == t_list[0]:#int同士の比較                      
@@ -28,18 +30,20 @@ def find_valid_y(df, num_reads):
                 if np.dot(df.iloc[:, j], canditate_y) != t_list[j]:
                     break                                                       
             else:
-                canditate_y_list = list(canditate_y)
-                if all([canditate_y_list != p for p in valid_y_list]):
-                    valid_y_num += 1
-                    valid_y_list.append(canditate_y_list)
-                            
-    return valid_y_list, valid_y_num
+                canditate_y_tuple =tuple(canditate_y)
+                if canditate_y_tuple in list(valid_y_dic.keys()):
+                    valid_y_dic[canditate_y_tuple] += 1
+                else:
+                    valid_y_dic[canditate_y_tuple] = 1                      
+    time_1 = time.time()
+    calculation_time = time_1 - time_0
+    return valid_y_dic, calculation_time
+
 
 class Random_method:
-    def __init__(self, df, valid_y_list, valid_y_num, num_reads, t_list):
+    def __init__(self, df, valid_y_dic, num_reads, t_list):
         self.df = df
-        self.valid_y_list = valid_y_list
-        self.valid_y_num = valid_y_num
+        self.valid_y_dic = valid_y_dic
         self.num_reads = num_reads
         self.t_list = t_list
 
@@ -47,13 +51,13 @@ class Random_method:
     def y_num_t1_hist(self, plot_path):
         LI = list(self.df['LI'])
         t1_dic = {}
-        for valid_y in self.valid_y_list:
+        for valid_y_tupele in self.valid_y_dic:
+            valid_y = list(valid_y_tupele)
             this_time_t1 = np.dot(valid_y, LI)
             if this_time_t1 in list(t1_dic.keys()):
                 t1_dic[this_time_t1] += 1
             else:
                 t1_dic[this_time_t1] = 1
-
 
         x = [i for i in list(t1_dic.keys())]
         y = [j for j in list(t1_dic.values())]
