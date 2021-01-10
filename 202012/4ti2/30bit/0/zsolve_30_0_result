@@ -1,4 +1,4 @@
-(miniconda3-4.7.12) (base) (master)⚡ % zsolve 30bit_0                                  ~/src/github.com/twinkle13531/master_degree/202012/4ti2/30bit/0
+(miniconda3-4.7.12) (base) (master)⚡ [130] % zsolve 30bit                                                                             ~/src/github.com/twinkle13531/master_degree/202011/4ti2/30bit
 -------------------------------------------------
 4ti2 version 1.6.9
 Copyright 1998, 2002, 2006, 2015 4ti2 team.
@@ -65,5 +65,5 @@ B  B  B B B B B B B B B B B B B B B B B B B B B B B B B B B  B B
 0  0  0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 -1 0
 0  6  6 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0  9 1
 
-Variable: 31, Sum: 22, Norm: 1, Solutions: 1977621, Time: 93274.84s
-Final basis has 58296 inhomogeneous, 0 homogeneous and 0 free elements. Time: 114590.22s
+Variable: 31, Sum: 22, Norm: 1, Solutions: 1977621, Time: 96816.88s
+Final basis has 58296 inhomogeneous, 0 homogeneous and 0 free elements. Time: 120017.00s

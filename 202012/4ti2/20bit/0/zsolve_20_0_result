@@ -1,4 +1,4 @@
-(miniconda3-4.7.12) (base) (master)⚡ % zsolve 20bit_0                                  ~/src/github.com/twinkle13531/master_degree/202012/4ti2/20bit/0
+(miniconda3-4.7.12) (base) (master)⚡ % zsolve 20bit_0                                               ~/src/github.com/twinkle13531/master_degree/202012/4ti2/20bit/0
 -------------------------------------------------
 4ti2 version 1.6.9
 Copyright 1998, 2002, 2006, 2015 4ti2 team.
@@ -55,5 +55,5 @@ Lattice:
  1 -1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 -1 0
  4  5 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0  2 1
 
-Variable: 21, Sum: 12, Norm: 1, Solutions: 20868, Time:  4.08s
-Final basis has 16464 inhomogeneous, 0 homogeneous and 0 free elements. Time:  4.94s
+Variable: 21, Sum: 12, Norm: 1, Solutions: 20868, Time:  4.00s
+Final basis has 16464 inhomogeneous, 0 homogeneous and 0 free elements. Time:  4.84s
