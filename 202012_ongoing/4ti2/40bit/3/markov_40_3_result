@@ -1,0 +1,31 @@
+(miniconda3-4.7.12) (base) (master)⚡ % markov 40bit_3.mat                              ~/src/github.com/twinkle13531/master_degree/202012/4ti2/40bit/3
+-------------------------------------------------
+4ti2 version 1.6.9
+Copyright 1998, 2002, 2006, 2015 4ti2 team.
+4ti2 comes with ABSOLUTELY NO WARRANTY.
+This is free software, and you are welcome
+to redistribute it under certain conditions.
+For details, see the file COPYING.
+-------------------------------------------------
+Using 64 bit integers.
+WARNING: Overflow detection is not available on this architecture/compiler.
+WARNING: To guarantee correct results, run 4ti2 with arbitrary precision
+WARNING: by using the option `-parb'
+WARNING: Please specify the matrix in the file '40bit_3.mat.mat' instead of '40bit_3.mat'.
+Computing generating set (Hybrid) ...
+Phase 1:
+Computing generating set (Saturation) ...
+Saturating 40 variable(s).
+  Sat  40: Col:   3 (U) Size:     37, Time:  0.00 /  0.00 secs.          
+  Saturated already on 11 variable(s).
+  Sat  28: Col:  10 (F) Size:     37, Time:  0.00 /  0.00 secs.          
+  Saturated already on 7 variable(s).
+  Sat  20: Col:  16 (F) Size:     37, Time:  0.00 /  0.00 secs.          
+  Saturated already on 19 variable(s).
+Done. Size:     37, Time: 0.00 /  0.00 secs
+Phase 2:
+Lifting 0 variable(s).
+Done. Size:     37, Time: 0.00 /  0.00 secs
+Computing Miminal Generation Set ...
+  Size:     37, Time:  0.00 /  0.00 secs. Done.
+4ti2 Total Time:  0.00 secs.
