@@ -21,14 +21,14 @@ dw_sampler = DWaveSampler(
         token = "TOKY-1319d5c52b9aa35f34b40feba0cea58a4f5d3c09",
         retry_interval=5
     )
-
+# インスタンス作成
 qa_sampler = AutoEmbeddingComposite(dw_sampler)
 
 def calc_marginals(df):
         return np.array([                      
-                sum(df['Y']),
-                np.dot(df['Y'], df['SEX']),
-                np.dot(df['Y'], df['AOP']),
+                sum(df['Y']), #0
+                np.dot(df['Y'], df['SEX']),      #1
+                np.dot(df['Y'], df['AOP']),    #2  
             ])
         
 def make_Hamiltonian(df):
@@ -64,12 +64,7 @@ def make_Hamiltonian(df):
 
     return dimod.BinaryQuadraticModel(lin, quad, num, dimod.Vartype.BINARY)#dic, dic, num
 
-    
-def sample_(bqm, chain_strength, num_reads):
-    res = qa_sampler.sample(bqm, chain_strength = chain_strength, chain_break_fraction=True, num_reads=num_reads)
-    return res
-
-    
+###############################################################################
 class QA_DSampler_AEmbedding:
     def __init__(self, df, bqm, n, num_reads, chain_strength):
         self.df = df
@@ -77,8 +72,13 @@ class QA_DSampler_AEmbedding:
         self.n = n
         self.num_reads = num_reads
         self.chain_strength = chain_strength
+    
+    
+    def sample_(self):
+        res = qa_sampler.sample(self.bqm, chain_strength = self.chain_strength, chain_break_fraction=True, num_reads=self.num_reads)
+        return res
         
-
+    
     def find_valid_y_time_ntimes(self):
         valid_y_info_dic = {}#sample:[occurrences, chain_break_fraction]
         calculation_time = 0
@@ -86,40 +86,25 @@ class QA_DSampler_AEmbedding:
             res = qa_sampler.sample(self.bqm, chain_strength = self.chain_strength, chain_break_fraction=True, num_reads=self.num_reads)#annealing_time
             time_0 = time.time()
             for sample, energy, num_occurrences, chain_break_fraction in res.data(['sample', 'energy', 'num_occurrences', 'chain_break_fraction']):
+                sample_tuple = tuple(sample.values())
                 if energy == 0.0:
-                    sample_tuple = tuple(sample.values())
                     if sample_tuple in list(valid_y_info_dic.keys()):
                         valid_y_info_dic[sample_tuple][0] += num_occurrences
                     else:
                         valid_y_info_dic[sample_tuple] = [num_occurrences, chain_break_fraction]
-            time_1 = time.time()
-            calculation_time += time_1 - time_0 + 20*10**(-6)
+                time_1 = time.time()
+                #print('here')
+                calculation_time += time_1 - time_0 + 20*10**(-6)
+        
         return  valid_y_info_dic, calculation_time
-    
-    
-    def find_y_time(self):
-        valid_y_info_dic = {}#sample:[occurrences, chain_break_fraction]
-        calculation_time = 0
-        for _ in range(self.n):
-            res = qa_sampler.sample(self.bqm, chain_strength = self.chain_strength, chain_break_fraction=True, num_reads=self.num_reads)#annealing_time
-            time_0 = time.time()
-            for sample, energy, num_occurrences, chain_break_fraction in res.data(['sample', 'energy', 'num_occurrences', 'chain_break_fraction']):
-                if energy == 0.0:
-                    if sample_tuple in list(valid_y_info_dic.keys()):
-                        valid_y_info_dic[sample_tuple][0] += num_occurrences
-                    else:
-                        valid_y_info_dic[sample_tuple] = [num_occurrences, chain_break_fraction]
-            time_1 = time.time()
-            calculation_time += time_1 - time_0 + 20*10**(-6)
-        return  calculation_time
 
-    
+
     def y_num_t1_hist(self, valid_y_info_dic, plot_path):
         LI = list(self.df['LI'])
         hist_dic = {}
 
-        for valid_y_tu in list(valid_y_info_dic.keys()):
-            valid_y = list(valid_y_tu)
+        for valid_y_info in list(valid_y_info_dic.keys()):
+            valid_y = list(valid_y_info)
             t1 = int(np.dot(LI, valid_y))
             if t1 in hist_dic.keys():
                 hist_dic[t1] += 1
@@ -137,85 +122,118 @@ class QA_DSampler_AEmbedding:
         plt.plot(t1, 0)
         plt.show()
         plt.close()
+
         return hist_dic
 
 
-    def num_y_transition(self, path):
-        time_list = []#
-        valid_y_num_nodup = {}
+    def time_num_y(self, path):
+        time_list = []
         time_0 = time.time() 
+
+        valid_y_list= []                                                           
+        valid_y_num= 0
         for _ in range(self.n):
             res = qa_sampler.sample(self.bqm, chain_strength = self.chain_strength, chain_break_fraction=True, num_reads=self.num_reads)
-            for sample, energy, num_occurrences, chain_break_fraction in res.data(['sample', 'energy', 'num_occurrences', 'chain_break_fraction']):
-                if energy == 0.:
-                    sample_tuple = tuple(sample.values())
-                    if sample_tuple in list(valid_y_num_nodup.keys()):
-                        continue
-                    else:
-                        valid_y_num_nodup[sample_tuple] = 1
+            for y_info in list(self.res.record):
+                if y_info[1]==0.:
+                    if len(valid_y_list)==0:
+                        valid_y_list.append(list(y_info[0]))
+                        valid_y_num += 1
                         time_1 = time.time()
                         elapsed_time = time_1 - time_0
-                        time_list.append(elapsed_time)            
-        valid_y_num_list = [i for i in range(1, len(valid_y_num_nodup)+1)]
+                        time_list.append(elapsed_time)
+
+                    elif all(list(y_info[0]) != p for p in valid_y_list): 
+                        valid_y_list.append(list(y_info[0]))
+                        valid_y_num += 1
+                        time_1 = time.time()
+                        elapsed_time = time_1 - time_0
+                        time_list.append(elapsed_time)
+
+        valid_y_num_list = [i for i in range(1, valid_y_num+1)]
+
         plt.xlabel('time')
-        plt.ylabel('number of valid y')
+        plt.ylabel('number of hits')
         plt.plot(time_list, valid_y_num_list)
         plt.savefig(path)
         plt.show()
         plt.close()
-        return time_list
-    
 
-    def p_value_transition(self, output_path):
+        return valid_y_list, valid_y_num_list, time_list    
+
+
+    def p_value_transition(self, valid_y_info_list, output_path) :
         t1 = int(np.dot(self.df['Y'], self.df['LI']))
         t1_y = 0
         p_dic = {}
+
+        valid_y_num= 0
         valid_y_list = []
+        res = qa_sampler.sample(self.bqm, chain_strength = self.chain_strength, chain_break_fraction=True, num_reads=self.num_reads)
         for _ in range(self.n):
-            res = qa_sampler.sample(self.bqm, chain_strength = self.chain_strength, chain_break_fraction=True, num_reads=self.num_reads)
+            valid_y_info_list = []
             for sample, energy, num_occurrences, chain_break_fraction in res.data(['sample', 'energy', 'num_occurrences', 'chain_break_fraction']):
-                if energy==0.:
-                    this_time_y = tuple(sample.values())
-                    if this_time_y in valid_y_list:
-                        continue
-                    else:
-                        valid_y_list.append(this_time_y)#
-                        this_time_y_se = pd.Series(this_time_y)
-                        if int(np.dot(this_time_y_se, self.df['LI'])) == t1:
+                valid_y_info_list.append([list(sample.values()), energy, num_occurrences, chain_break_fraction])
+
+            for y_info in valid_y_info_list:#sample, energy, num_occurrences, chain_break_fraction
+                if y_info[1]==0.:
+                    valid_y = y_info[0]
+                    if all(valid_y != p for p in valid_y_list):
+                        valid_y_num += 1
+                        valid_y_list.append(valid_y)
+                        if int(np.dot(valid_y, list(self.df['LI'])))==t1:
                             t1_y += 1
-                            p_dic[len(valid_y_list)] = t1_y / len(valid_y_list)
-        plt.xlabel('number of valid y')
+                            p_dic[valid_y_num] = t1_y/valid_y_num
+
+        plt.xlabel('number of hits')
         plt.ylabel('p value')
         plt.plot(list(p_dic.keys()), list(p_dic.values()))
         plt.savefig(output_path)
         plt.show()
         plt.close()
-        return valid_y_list, p_dic
 
-    
-    def occurrence_hist(self, valid_y_info_dic, plot_path):
-        occurrence_list = [int(valid_y_info[0]) for valid_y_info in valid_y_info_dic.values()]
-        x = [i for i in range(len(occurrence_list))]
-        plt.xlabel('each sample')
-        plt.ylabel('number of the occurrence')
-        plt.bar(x, occurrence_list)
-        ax = plt.gca()
-        ax.axes.xaxis.set_visible(False)
-        plt.savefig(plot_path)
-        plt.show()
-        plt.close()
-        return occurrence_list
+        return valid_y_num, valid_y_list, p_dic
 
+###############################################################################
+
+# occurance_list = [int(valid_y_info[2]) for valid_y_info in valid_y_info_list]
+
+def occurrence_hist(valid_y_info_list, plot_path):
+    x = [i for i in range(len(valid_y_info_list))]
+    occurance_list = [int(valid_y_info[2]) for valid_y_info in valid_y_info_list]
+    plt.xlabel('each sample')
+    plt.ylabel('number of the occurence')
+    plt.bar(x, occurance_list)
+    ax = plt.gca()
+    ax.axes.xaxis.set_visible(False)
+    plt.savefig(plot_path)
+    plt.show()
+    plt.close()
+
+    return occurance_list
     
-    def p_value(self, valid_y_info_dic):
-        t1 = int(np.dot(self.df['Y'], self.df['LI']))
-        LI = list(self.df['LI'])
-        p_num = 0
-        
-        for valid_y_tu in list(valid_y_info_dic.keys()):
-            valid_y = list(valid_y_tu)
-            if t1 == int(np.dot(valid_y, LI)):
-                p_num += 1
-        valid_y_num = len(valid_y_info_dic)
-        if valid_y_num > 0:
-            return p_num/valid_y_num
+def occurrence_hist_neal(occurrence_list, plot_path):
+    x = [i for i in range(len(occurrence_list))]
+    plt.xlabel('each sample')
+    plt.ylabel('number of the occurrence')
+    plt.bar(x, occurrence_list)
+    ax = plt.gca()
+    ax.axes.xaxis.set_visible(False)
+    plt.savefig(plot_path)
+    plt.show()
+    plt.close()
+    return 0
+
+def p_value(df, valid_y_info_list):
+    t1 = int(np.dot(df['Y'], df['LI']))
+    LI = list(df['LI'])
+    p_num = 0
+    for valid_y_info in valid_y_info_list:
+        if t1 == int(np.dot(valid_y_info[0], LI)):
+            p_num += 1
+    valid_y_num = len(valid_y_info_list)
+    if valid_y_num > 0:
+        return p_num/valid_y_num
+    else:
+        messa = "can't calculate p value"
+        return messa
