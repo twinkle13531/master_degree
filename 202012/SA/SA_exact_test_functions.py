@@ -58,12 +58,15 @@ def make_res_data(df, num_reads):
     sa_sampler = neal.sampler.SimulatedAnnealingSampler()
     initial_states = df['Y'].values.tolist()
     bqm = make_Hamiltonian(df)
+    time_0 = time.time()
     res = sa_sampler.sample(
         bqm, num_reads = num_reads,
         initial_states = initial_states,
         initial_states_generator = 'tile'
     )
-    return res
+    time_1 = time.time()
+    elapsed_time = time_1 - time_0
+    return res, elapsed_time
 
 
 def find_valid_y(res):

@@ -84,7 +84,6 @@ class QA_DSampler_AEmbedding:
         calculation_time = 0
         for _ in range(self.n):
             res = qa_sampler.sample(self.bqm, chain_strength = self.chain_strength, chain_break_fraction=True, num_reads=self.num_reads)#annealing_time
-            time_0 = time.time()
             for sample, energy, num_occurrences, chain_break_fraction in res.data(['sample', 'energy', 'num_occurrences', 'chain_break_fraction']):
                 if energy == 0.0:
                     sample_tuple = tuple(sample.values())
@@ -92,9 +91,7 @@ class QA_DSampler_AEmbedding:
                         valid_y_info_dic[sample_tuple][0] += num_occurrences
                     else:
                         valid_y_info_dic[sample_tuple] = [num_occurrences, chain_break_fraction]
-            time_1 = time.time()
-            calculation_time += time_1 - time_0 + 20*10**(-6)
-        return  valid_y_info_dic, calculation_time
+        return  valid_y_info_dic, res.info['timing']['anneal_time_per_run']
     
     
     def find_y_time(self):
@@ -134,7 +131,7 @@ class QA_DSampler_AEmbedding:
         plt.xticks(x, x)
         plt.yticks(y, y)
         plt.savefig(plot_path)
-        plt.plot(t1, 0)
+        #plt.plot(t1, 0)
         plt.show()
         plt.close()
         return hist_dic

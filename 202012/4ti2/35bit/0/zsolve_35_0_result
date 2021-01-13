@@ -1,4 +1,4 @@
-(miniconda3-4.7.12) (base) (master)⚡ % zsolve 35bit_0                                                                ~/src/github.com/twinkle13531/master_degree/202012/4ti2/35bit/0
+(miniconda3-4.7.12) (base) (master)⚡ % zsolve 35bit_0                                               ~/src/github.com/twinkle13531/master_degree/202012/4ti2/35bit/0
 -------------------------------------------------
 4ti2 version 1.6.9
 Copyright 1998, 2002, 2006, 2015 4ti2 team.
@@ -70,5 +70,5 @@ Lattice:
  6  7 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0  8 0 1
  1 -1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 -1 1 0
 
-Variable: 36, Sum: 22, Norm: 1, Solutions: 1033703, Time: 95347.35s
-Final basis has 1145235 inhomogeneous, 0 homogeneous and 0 free elements. Time: 244582.86s
+Variable: 36, Sum: 22, Norm: 1, Solutions: 1180204, Time: 94238.52s
+Final basis has 1145235 inhomogeneous, 0 homogeneous and 0 free elements. Time: 148263.61s
