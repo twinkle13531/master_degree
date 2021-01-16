@@ -87,10 +87,22 @@ class Random_method:
         p_num = 0
         for valid_y_tu in list(self.valid_y_dic.keys()):
             valid_y = list(valid_y_tu)
-            if t1 == int(np.dot(valid_y, LI)):
+            if t1 >= int(np.dot(valid_y, LI)):#####################
                 p_num += 1
         if len(self.valid_y_dic) > 0:
             return p_num/len(self.valid_y_dic)
+        
+    def p_value_noeq(self):
+        t1 = int(np.dot(self.df['Y'], self.df['LI']))
+        LI = list(self.df['LI'])
+        p_num = 0
+        for valid_y_tu in list(self.valid_y_dic.keys()):
+            valid_y = list(valid_y_tu)
+            if t1 > int(np.dot(valid_y, LI)):###################
+                p_num += 1
+        if len(self.valid_y_dic) > 0:
+            return p_num/len(self.valid_y_dic)
+        
     
     def p_value_transition(self, output_path):
         t1 = int(np.dot(self.df['Y'], self.df['LI']))

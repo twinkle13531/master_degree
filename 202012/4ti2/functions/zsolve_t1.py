@@ -57,6 +57,14 @@ class zsolve_result_summerize():
         LI = list(self.df['LI'])
         t1_y_num = 0
         for zinhom in self.zinhom_list:
-            if int(np.dot(LI, self.df['Y'])) == int(np.dot(LI, zinhom)):
+            if int(np.dot(LI, self.df['Y'])) >= int(np.dot(LI, zinhom)):###############
+                t1_y_num += 1
+        return t1_y_num / len(self.zinhom_list)
+    
+    def calucurate_p_noeq(self):
+        LI = list(self.df['LI'])
+        t1_y_num = 0
+        for zinhom in self.zinhom_list:
+            if int(np.dot(LI, self.df['Y'])) > int(np.dot(LI, zinhom)):###############
                 t1_y_num += 1
         return t1_y_num / len(self.zinhom_list)

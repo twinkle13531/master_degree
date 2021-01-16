@@ -58,13 +58,13 @@ def make_res_data(df, num_reads):
     sa_sampler = neal.sampler.SimulatedAnnealingSampler()
     initial_states = df['Y'].values.tolist()
     bqm = make_Hamiltonian(df)
-    time_0 = time.time()
+    time_0 = time.time() ##
     res = sa_sampler.sample(
         bqm, num_reads = num_reads,
         initial_states = initial_states,
         initial_states_generator = 'tile'
     )
-    time_1 = time.time()
+    time_1 = time.time() ##
     elapsed_time = time_1 - time_0
     return res, elapsed_time
 
@@ -189,6 +189,15 @@ class SA_res_valid_dic():
         num_t1_y = 0
         for valid_y in list(self.valid_y_info_dic.keys()):
             valid_y_se = pd.Series(valid_y)
-            if int(np.dot(valid_y_se, self.df['LI']))==t1:
+            if int(np.dot(valid_y_se, self.df['LI'])) <= t1:####################
+                num_t1_y += 1
+        return num_t1_y/len(self.valid_y_info_dic)
+    
+    def calc_p_value_noeq(self):
+        t1 = int(np.dot(self.df['Y'], self.df['LI']))
+        num_t1_y = 0
+        for valid_y in list(self.valid_y_info_dic.keys()):
+            valid_y_se = pd.Series(valid_y)
+            if int(np.dot(valid_y_se, self.df['LI'])) < t1:####################
                 num_t1_y += 1
         return num_t1_y/len(self.valid_y_info_dic)
