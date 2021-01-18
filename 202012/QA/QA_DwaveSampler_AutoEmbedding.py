@@ -8,17 +8,18 @@ import itertools
 import random
 import matplotlib.pyplot as plt
 from dwave.system.samplers import DWaveSampler
-from dwave.system.composites import AutoEmbeddingComposite, EmbeddingComposite
+from dwave.system.composites import AutoEmbeddingComposite
 from dwave.embedding.chain_strength import uniform_torque_compensation
 import dimod
 import timeit
 import time
+from scipy import stats
 
 #繰り返さない！
 dw_sampler = DWaveSampler(
         endpoint="https://cloud.dwavesys.com/sapi",
         solver = 'DW_2000Q_6',
-        token = "TOKY-1319d5c52b9aa35f34b40feba0cea58a4f5d3c09",
+        #token = "TOKY-1319d5c52b9aa35f34b40feba0cea58a4f5d3c09",
         token = "DEV-6a425d517b4cc6a3e4f9fef6c26af9cd037b879e",
         retry_interval=5
     )
@@ -32,6 +33,42 @@ def calc_marginals(df):
                 np.dot(df['Y'], df['AOP']),
             ])
         
+def make_Hamiltonian_stander(df):
+    t_list = calc_marginals(df)
+    N=len(df)
+    dup_list = [(i, i) for i in range(N)]
+    comb_list = [(i, j) for i in range(N) for j in range(i+1, N)]
+
+    lin_Y = [1-2*t_list[0] for (i, _) in dup_list] #同じy同士
+    quad_Y = [2 for (i, j) in comb_list] #異なるy同士
+    num_Y = t_list[0]**2 #数字の二乗
+
+    SEX = df['SEX'].iloc
+    lin_SEX  = [(SEX[i] - 2 * t_list[1]) * SEX[i] for (i, _) in dup_list]
+    quad_SEX  = [2*SEX[i] * SEX[j] for (i, j) in comb_list]
+    num_SEX  = t_list[1]**2
+
+    AOP = df['AOP'].iloc
+    lin_AOP = [(AOP[i] - 2 * t_list[2]) * AOP[i] for (i, _) in dup_list]
+    quad_AOP = [2*AOP[i] * AOP[j] for (i, j) in comb_list]
+    num_AOP = t_list[2]**2
+
+    #lin
+    lin_list = [sum(lin) for lin in zip(lin_Y, lin_SEX, lin_AOP)]
+    lin_list = list(stats.zscore(lin_list))
+    lin = {i: lin_list[i] for (i, _) in dup_list}
+
+    #quad
+    quad_values = [sum(quad) for quad in zip(quad_Y, quad_SEX, quad_AOP)]
+    quad_values = list(stats.zscore(quad_values))
+    quad = {ij: quad_values[n] for (n, ij) in enumerate(comb_list)}
+
+    #num
+    num = num_Y + num_SEX + num_AOP
+
+    return dimod.BinaryQuadraticModel(lin, quad, num, dimod.Vartype.BINARY)#dic, dic, num
+
+
 def make_Hamiltonian(df):
     t_list = calc_marginals(df)
     N=len(df)
@@ -65,13 +102,124 @@ def make_Hamiltonian(df):
 
     return dimod.BinaryQuadraticModel(lin, quad, num, dimod.Vartype.BINARY)#dic, dic, num
 
+def make_Hamiltonian_ice(df, gamma):
+    t_list = calc_marginals(df)
+    N=len(df)
+    dup_list = [(i, i) for i in range(N)]
+    comb_list = [(i, j) for i in range(N) for j in range(i+1, N)]
+
+    lin_Y = [1-2*t_list[0] for (i, _) in dup_list] #同じy同士
+    quad_Y = [2 for (i, j) in comb_list] #異なるy同士
+    num_Y = t_list[0]**2 #数字の二乗
+
+    SEX = df['SEX'].iloc
+    lin_SEX  = [(SEX[i] - 2 * t_list[1]) * SEX[i] for (i, _) in dup_list]
+    quad_SEX  = [2*SEX[i] * SEX[j] for (i, j) in comb_list]
+    num_SEX  = t_list[1]**2
+
+    AOP = df['AOP'].iloc
+    lin_AOP = [(AOP[i] - 2 * t_list[2]) * AOP[i] for (i, _) in dup_list]
+    quad_AOP = [2*AOP[i] * AOP[j] for (i, j) in comb_list]
+    num_AOP = t_list[2]**2
+
+    #lin
+    lin_list = [sum(lin) for lin in zip(lin_Y, lin_SEX, lin_AOP)]
+    lin = {i: gamma*lin_list[i] for (i, _) in dup_list}
+
+    #quad
+    quad_values = [sum(quad) for quad in zip(quad_Y, quad_SEX, quad_AOP)]
+    quad = {ij: quad_values[n] for (n, ij) in enumerate(comb_list)}
+
+    #num
+    num = num_Y + num_SEX + num_AOP
+
+    return dimod.BinaryQuadraticModel(lin, quad, num, dimod.Vartype.BINARY)#dic, dic, num
+
+def make_Hamiltonian_ice0(df, k):
+    t_list = calc_marginals(df)
+    N=len(df)
+    dup_list = [(i, i) for i in range(N)]
+    comb_list = [(i, j) for i in range(N) for j in range(i+1, N)]
+
+    lin_Y = [1-2*t_list[0] for (i, _) in dup_list] #同じy同士
+    quad_Y = [2 for (i, j) in comb_list] #異なるy同士
+    num_Y = t_list[0]**2 #数字の二乗
+
+    SEX = df['SEX'].iloc
+    lin_SEX  = [(SEX[i] - 2 * t_list[1]) * SEX[i] for (i, _) in dup_list]
+    quad_SEX  = [2*SEX[i] * SEX[j] for (i, j) in comb_list]
+    num_SEX  = t_list[1]**2
+
+    AOP = df['AOP'].iloc
+    lin_AOP = [(AOP[i] - 2 * t_list[2]) * AOP[i] for (i, _) in dup_list]
+    quad_AOP = [2*AOP[i] * AOP[j] for (i, j) in comb_list]
+    num_AOP = t_list[2]**2
+
+    #lin
+    lin_list = [sum(lin) for lin in zip(lin_Y, lin_SEX, lin_AOP)]
+    lin = {i: k*lin_list[i] for (i, _) in dup_list}
+
+    #quad
+    quad_values = [sum(quad) for quad in zip(quad_Y, quad_SEX, quad_AOP)]
+    quad = {ij: k*quad_values[n] for (n, ij) in enumerate(comb_list)}
+
+    #num
+    num = num_Y + num_SEX + num_AOP
+
+    return dimod.BinaryQuadraticModel(lin, quad, num, dimod.Vartype.BINARY)#dic, dic, num
+
     
 def sample_(bqm, chain_strength, num_reads):
     res = qa_sampler.sample(bqm, chain_strength = chain_strength, chain_break_fraction=True, num_reads=num_reads)
     return res
 
-    
+def sampler_autoscale(bqm, chain_strength, num_reads):
+    res = qa_sampler.sample(
+        bqm, chain_strength = chain_strength, 
+        chain_break_fraction=True, num_reads=num_reads, auto_scale=True)
+    return res
+
+
+def sampler_annealingtime_autoscale(bqm, chain_strength, num_reads, annealing_time):
+    res = qa_sampler.sample(
+        bqm, chain_strength = chain_strength, 
+        chain_break_fraction=True, num_reads=num_reads, 
+        annealing_time = annealing_time, auto_scale=True)
+    return res
+
+def sampler_paras(bqm, chain_strength, num_reads, spin_num):
+    res = qa_sampler.sample(
+        bqm, chain_strength = chain_strength, 
+        chain_break_fraction=True, 
+        num_reads=num_reads, 
+        auto_scale=True, 
+        num_spin_reversal_transform = spin_num
+    )
+    return res
+
+#postprocessツールはadvantageで有効らしい
+
 class QA_DSampler_AEmbedding:
+    def __init__(self, df, bqm, n, num_reads, chain_strength, res):
+        self.df = df
+        self.bqm = bqm
+        self.n = n
+        self.num_reads = num_reads
+        self.chain_strength = chain_strength
+        self.res = res
+        
+    def find_y(self):
+        valid_y_info_dic = {}#sample:[occurrences, chain_break_fraction]
+        for sample, energy, num_occurrences, chain_break_fraction in self.res.data(['sample', 'energy', 'num_occurrences', 'chain_break_fraction']):
+            if energy == 0.0:
+                sample_tuple = tuple(sample.values())
+                if sample_tuple in list(valid_y_info_dic.keys()):
+                    valid_y_info_dic[sample_tuple][0] += num_occurrences
+                else:
+                    valid_y_info_dic[sample_tuple] = [num_occurrences, chain_break_fraction]
+        return valid_y_info_dic
+        
+class QA_DSampler_AEmbedding_ntimes:
     def __init__(self, df, bqm, n, num_reads, chain_strength):
         self.df = df
         self.bqm = bqm

@@ -23,7 +23,42 @@ def calc_marginals(df):
                 np.dot(df['Y'], df['SEX']),
                 np.dot(df['Y'], df['AOP']),
             ])
-        
+
+    
+def know_Hamiltonian_para(df):
+    t_list = calc_marginals(df)
+    N=len(df)
+    dup_list = [(i, i) for i in range(N)]
+    comb_list = [(i, j) for i in range(N) for j in range(i+1, N)]
+
+    lin_Y = [1-2*t_list[0] for (i, _) in dup_list] #同じy同士
+    quad_Y = [2 for (i, j) in comb_list] #異なるy同士
+    num_Y = t_list[0]**2 #数字の二乗
+
+    SEX = df['SEX'].iloc
+    lin_SEX  = [(SEX[i] - 2 * t_list[1]) * SEX[i] for (i, _) in dup_list]
+    quad_SEX  = [2*SEX[i] * SEX[j] for (i, j) in comb_list]
+    num_SEX  = t_list[1]**2
+
+    AOP = df['AOP'].iloc
+    lin_AOP = [(AOP[i] - 2 * t_list[2]) * AOP[i] for (i, _) in dup_list]
+    quad_AOP = [2*AOP[i] * AOP[j] for (i, j) in comb_list]
+    num_AOP = t_list[2]**2
+
+    #lin
+    lin_list = [sum(lin) for lin in zip(lin_Y, lin_SEX, lin_AOP)]
+    lin = {i: lin_list[i] for (i, _) in dup_list}
+
+    #quad
+    quad_values = [sum(quad) for quad in zip(quad_Y, quad_SEX, quad_AOP)]
+    quad = {ij: quad_values[n] for (n, ij) in enumerate(comb_list)}
+
+    #num
+    num = num_Y + num_SEX + num_AOP
+
+    return lin_list, quad_values, num
+
+
 def make_Hamiltonian(df):
     t_list = calc_marginals(df)
     N=len(df)
@@ -57,7 +92,42 @@ def make_Hamiltonian(df):
 
     return dimod.BinaryQuadraticModel(lin, quad, num, dimod.Vartype.BINARY)#dic, dic, num
 
-def make_Hamiltonian_ice(df, gamma):
+def make_Hamiltonian_ice0(df, k):
+    t_list = calc_marginals(df)
+    N=len(df)
+    dup_list = [(i, i) for i in range(N)]
+    comb_list = [(i, j) for i in range(N) for j in range(i+1, N)]
+
+    lin_Y = [1-2*t_list[0] for (i, _) in dup_list] #同じy同士
+    quad_Y = [2 for (i, j) in comb_list] #異なるy同士
+    num_Y = t_list[0]**2 #数字の二乗
+
+    SEX = df['SEX'].iloc
+    lin_SEX  = [(SEX[i] - 2 * t_list[1]) * SEX[i] for (i, _) in dup_list]
+    quad_SEX  = [2*SEX[i] * SEX[j] for (i, j) in comb_list]
+    num_SEX  = t_list[1]**2
+
+    AOP = df['AOP'].iloc
+    lin_AOP = [(AOP[i] - 2 * t_list[2]) * AOP[i] for (i, _) in dup_list]
+    quad_AOP = [2*AOP[i] * AOP[j] for (i, j) in comb_list]
+    num_AOP = t_list[2]**2
+
+    #lin
+    lin_list = [sum(lin) for lin in zip(lin_Y, lin_SEX, lin_AOP)]
+    lin = {i: k*lin_list[i] for (i, _) in dup_list}
+
+    #quad
+    quad_values = [sum(quad) for quad in zip(quad_Y, quad_SEX, quad_AOP)]
+    quad = {ij: k*quad_values[n] for (n, ij) in enumerate(comb_list)}
+
+    #num
+    num = num_Y + num_SEX + num_AOP
+
+    return dimod.BinaryQuadraticModel(lin, quad, num, dimod.Vartype.BINARY)#dic, dic, num
+
+
+
+def make_Hamiltonian_ice1(df, gamma):
     t_list = calc_marginals(df)
     N=len(df)
     dup_list = [(i, i) for i in range(N)]
