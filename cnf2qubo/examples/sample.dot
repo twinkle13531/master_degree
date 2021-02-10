@@ -1,0 +1,21 @@
+digraph sample {
+1;
+4 [label = "NOT"];
+3 -> 4;
+5 [label = "OR"];
+1 -> 5;
+4 -> 5;
+2;
+3;
+6 [label = "OR"];
+2 -> 6;
+3 -> 6;
+7 [label = "NOT"];
+1 -> 7;
+8 [label = "OR"];
+6 -> 8;
+7 -> 8;
+9 [label = "AND"];
+5 -> 9;
+8 -> 9;
+}
