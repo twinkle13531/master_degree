@@ -1,0 +1,20 @@
+FROM ubuntu:bionic
+  2 RUN apt update \
+  3 && apt-get -yV install -y python3 python3-pip \
+  4 && apt-get -yV install libgmp-dev libglpk-dev \
+  5 && apt-get -yV install make libc-dev make automake autoconf libtool clang wget unzip \
+  7 && apt-get clean
+  8 RUN cd /opt \
+ 10 && wget https://github.com/4ti2/4ti2/archive/master.zip \
+ 11 && unzip master.zip \
+ 12 && mv 4ti2-master 4ti2 \
+ 13 && rm master.zip \
+ 14 && cd 4ti2 \
+ 15 && ./autogen.sh \
+ 16 && CC=clang ./configure \
+ 17 && make \
+ 18 && make check \
+ 19 && make install-exec \
+ 20 && rm -rf /var/lib/apt/lists/* \
+ 21 && pip3 install \
+ 22 jupyterlab==2.1.4
