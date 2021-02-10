@@ -179,12 +179,27 @@ def sampler_autoscale(bqm, chain_strength, num_reads):
         chain_break_fraction=True, num_reads=num_reads, auto_scale=True)
     return res
 
+def sampler_autoscale_numspin(bqm, chain_strength, num_reads, num_spin_reversal_transforms):
+    res = qa_sampler.sample(
+        bqm, chain_strength = chain_strength, 
+        chain_break_fraction=True, num_reads=num_reads, 
+        auto_scale=True, num_spin_reversal_transforms=num_spin_reversal_transforms)
+    return res
+
 
 def sampler_annealingtime_autoscale(bqm, chain_strength, num_reads, annealing_time):
     res = qa_sampler.sample(
         bqm, chain_strength = chain_strength, 
         chain_break_fraction=True, num_reads=num_reads, 
         annealing_time = annealing_time, auto_scale=True)
+    return res
+
+def sampler_timeadjust_autoscale(bqm, chain_strength, num_reads, annealing_time, readout_thermalization):
+    res = qa_sampler.sample(
+        bqm, chain_strength = chain_strength, 
+        chain_break_fraction=True, num_reads=num_reads, 
+        annealing_time = annealing_time, 
+        readout_thermalization = readout_thermalization, auto_scale=True)
     return res
 
 def sampler_paras(bqm, chain_strength, num_reads, spin_num):
