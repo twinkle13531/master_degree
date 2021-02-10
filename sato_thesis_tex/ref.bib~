@@ -1,0 +1,103 @@
+@article{jaffe1983osteosarcoma,
+	title={Osteosarcoma: Intra-arterial treatment of the primary tumor with cis-diammine-dichloroplatinum II (CDP): Angiographic, pathologic, and pharmacologic studies},
+	author={Jaffe, Norman and Knapp, John and Chuang, Vincent P and Wallace, Sidney and Ayala, Alberto and Murray, John and Cangir, Ayten and Wang, Alexander and Benjamin, Robert S},
+	journal={Cancer},
+	volume={51},
+	number={3},
+	pages={402--407},
+	year={1983},
+	publisher={Wiley Online Library}
+}
+@article{dwave,
+  title={Quantum annealing with manufactured spins},
+  author={Johnson, Mark W and Amin, Mohammad HS and Gildert, Suzanne and Lanting, Trevor and Hamze, Firas and Dickson, Neil and Harris, R and Berkley, Andrew J and Johansson, Jan and Bunyk, Paul and others},
+  journal={Nature},
+  volume={473},
+  number={7346},
+  pages={194--198},
+  year={2011},
+  publisher={Nature Publishing Group}
+}
+@article{mss,
+  title={Nanomechanical membrane-type surface stress sensor},
+  author={Yoshikawa, Genki and Akiyama, Terunobu and Gautsch, Sebastian and Vettiger, Peter and Rohrer, Heinrich},
+  journal={Nano letters},
+  volume={11},
+  number={3},
+  pages={1044--1048},
+  year={2011},
+  publisher={ACS Publications}
+}
+@article{pbe,
+  title={Correcting density functional theory for accurate predictions of compound enthalpies of formation: Fitted elemental-phase reference energies},
+  author={Stevanovi{\'c}, Vladan and Lany, Stephan and Zhang, Xiuwen and Zunger, Alex},
+  journal={Physical Review B},
+  volume={85},
+  number={11},
+  pages={115104},
+  year={2012},
+  publisher={APS}
+}
+@article{gw_method,
+  title={Band-structure calculations for the 3 d transition metal oxides in G W},
+  author={Lany, Stephan},
+  journal={Physical Review B},
+  volume={87},
+  number={8},
+  pages={085112},
+  year={2013},
+  publisher={APS}
+}
+@article{gw_pbe_1,
+  title={Band gaps and optical spectra of chlorographene, fluorographene and graphane from G0W0, GW0 and GW calculations on top of PBE and HSE06 orbitals},
+  author={Karlicky, Frantisek and Otyepka, Michal},
+  journal={Journal of chemical theory and computation},
+  volume={9},
+  number={9},
+  pages={4155--4164},
+  year={2013},
+  publisher={ACS Publications}
+}
+@article{gw_pbe_2,
+  title={Resolution of the band gap prediction problem for materials design},
+  author={Crowley, Jason M and Tahir-Kheli, Jamil and Goddard III, William A},
+  journal={The journal of physical chemistry letters},
+  volume={7},
+  number={7},
+  pages={1198--1203},
+  year={2016},
+  publisher={ACS Publications}
+}
+@article{efm,
+  title={Matminer: An open source toolkit for materials data mining},
+  author={Ward, Logan and Dunn, Alexander and Faghaninia, Alireza and Zimmermann, Nils ER and Bajaj, Saurabh and Wang, Qi and Montoya, Joseph and Chen, Jiming and Bystrom, Kyle and Dylla, Maxwell and others},
+  journal={Computational Materials Science},
+  volume={152},
+  pages={60--69},
+  year={2018},
+  publisher={Elsevier}
+}
+@article{1qbit,
+  title={Optimal feature selection in credit scoring and classification using a quantum annealer},
+  author={Milne, Andrew and Rounds, Maxwell and Goddard, Phil},
+  year={2017},
+  publisher={1QB Inf. Technol.}
+}
+@inproceedings{fm,
+  title={Factorization machines},
+  author={Rendle, Steffen},
+  booktitle={2010 IEEE International Conference on Data Mining},
+  pages={995--1000},
+  year={2010},
+  organization={IEEE}
+}
+@article{kadowaki1998quantum,
+  title={Quantum annealing in the transverse Ising model},
+  author={Kadowaki, Tadashi and Nishimori, Hidetoshi},
+  journal={Physical Review E},
+  volume={58},
+  number={5},
+  pages={5355},
+  year={1998},
+  publisher={APS}
+}

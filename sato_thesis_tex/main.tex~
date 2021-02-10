@@ -1,0 +1,592 @@
+\documentclass[12pt, dvipdfmx]{jmaster}
+%\documentclass[12pt, dvipdfmx]{jsotsuron}
+\usepackage{newtxtext}
+\usepackage{textcomp}
+\usepackage[sc]{mathpazo}
+\usepackage{amsmath,amssymb,arydshln, amsthm}
+\usepackage[scaled]{helvet}
+\usepackage{otf}
+\usepackage[dvipdfmx]{graphicx}
+\usepackage[dvipdfmx]{color}
+\usepackage{tikz}
+\usepackage[framemethod=tikz]{mdframed}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage{verbatim}
+\usepackage{ascmac}
+%\usepackage{algorithm, algorithmic}
+\usepackage{algpseudocode, algorithm}
+\usepackage{listings,jlisting}
+\usepackage{bm}
+\usepackage{seqsplit}
+\usepackage{url}
+
+%追加
+\usepackage{cite}
+\usepackage{mathtools}
+\usepackage{lscape}
+%\itshape{italic}
+%\usepackage[]{algorithm2e}
+%\usepackage{itembkbx}
+
+\lstset{%
+	language={C},
+	basicstyle={\small},%
+	identifierstyle={\small},%
+	commentstyle={\small\itshape},%
+	keywordstyle={\small\bfseries},%
+	ndkeywordstyle={\small},%
+	stringstyle={\small\ttfamily},
+	frame={tb},
+	breaklines=true,
+	columns=[l]{fullflexible},%
+	numbers=left,%
+	xrightmargin=0zw,%
+	xleftmargin=3zw,%
+	numberstyle={\scriptsize},%
+	stepnumber=1,
+	numbersep=1zw,%
+	lineskip=-0、5ex%
+}
+
+\theoremstyle{definition}
+\newtheorem{theorem}{定理}
+\newtheorem*{theorem*}{定理}
+\newtheorem{definition}[theorem]{定義}
+\newtheorem*{definition*}{定義}
+\newtheorem{lemma}[theorem]{補題}
+\newtheorem*{lemma*}{補題}
+\newtheorem{Proof}{証明}
+\newtheorem*{Proof*}{証明}
+
+\newcommand{\argmax}{\mathop{\rm arg~max}\limits}
+\newcommand{\argmin}{\mathop{\rm arg~min}\limits}
+\newcommand{\name}[1]{\textbf{#1}}
+% RequireとEnsureをInputとOutputにする
+\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+\renewcommand{\algorithmicensure}{\textbf{Output:}}
+\algnewcommand{\Initialize}[1]{%
+  \State \textbf{Initialize:}
+  \Statex \hspace*{\algorithmicindent}\parbox[t]{0.9\linewidth}{\raggedright #1}
+  \Statex
+}
+%\algnewcommand{\IIf}[1]{\State\algorithmicif\ #1\ \algorithmicthen}
+%\algnewcommand{\EndIIf}{\unskip\ \algorithmicend\ \algorithmicif}
+
+\title{イジングマシンを用いた正確ロジスティック回帰\\
+Exact Logistic Regression with Ising Machines}
+\author{佐藤　史歩\\ Shiho Sato}
+
+\date{February 2020}
+
+\begin{document}
+\maketitle
+%$ $
+%\newpage
+
+\begin{abstract}
+	統計検定は、生物学の研究において不可欠であり、通常は、漸近近似に基づく手法が用いられている。
+	しかし、サンプル数が少ない場合には、誤差が大きくなるという問題が生じるが、全列挙に基づく正確検定手法は計算量が大きすぎるため、従来の計算機では実行が困難である。
+	一方、量子アニーラーを初めとするイジングマシンは、近年急速に発展しており、多くの応用が期待されている。
+	本論文では、イジングマシンを用いたサンプリングにより、Exact logistic regression(正確ロジスティック回帰)を行う手法を提案する。
+	本手法では、適切なハミルトニアンを定義し、イジングマシンを用いてその基底状態を求めることで、帰無分布のサンプリングを行う。
+	古典計算機上でのシミュレーテッドアニーリング(SA)、及び、量子アニーラD-Wave 2000Q(QA)を用いて、提案法の実装を行った結果、
+	全列挙に比較して、大幅に計算量を削減しながら、正確なP値の推定が可能であることがわかった。
+	現状ではSAと比較し、QAはコヒーレント時間が短いなどの理由からSAよりも性能が劣ったが、将来十分に量子計算機が発達することでより大規模で複雑な問題に対処できるようになることが期待される。
+\end{abstract}
+\newpage
+\tableofcontents
+\newpage
+
+\chapter{はじめに} 
+\label{sec:intro}
+\section{背景：統計解析とロジスティック回帰}
+2003年にヒトゲノム計画が完了して以来、ゲノム配列の個人差と形質との関連についての研究が急速に進み、病気（特に単一遺伝子疾患）の原因遺伝子を探索する方法としてポジショナル・クローニングという手法が多用されてきた。ところが単一あるいは数個の遺伝子の異常のみで説明の付く病気はわずかで、大半が複数の遺伝子に少しずつ影響されることで発症する多因子疾患であり、従来の手法ではその解析は困難となった。そこで、これまでのような特定の狭い領域の解析に加えて、ゲノム全体を巨視的に見渡す必要性から、GWASが用いられるようになった。
+
+GWASは遺伝的多様性を代表するSNPを位置マーカーとして用い、特定の病気と関連のあるSNPを見つけ出して、その近傍に存在すると推測される感受性遺伝子をリスト化していく。複数の感受性遺伝子を原因とする病気の場合、相当数の遺伝子の作用が累積することで、それなりの大きさの発症リスクをもたらすと考えられている。統計モデルとしてはロジスティック回帰を適用することが多い\cite{duverle2015privacy})。
+
+ロジスティック回帰は一般化線形モデルのひとつであり、一般化線形モデルは一般線形モデルを拡張した概念である。一般線形モデル（Ordinary Linear Model）は応答変数が量的データであり、説明変数と応答変数の間の線形関係を仮定している。応答変数は正規分布に従い、その平均は説明変数の一次結合で表される。しかし現実世界には線形関係で表すことのできない事象もある。そこで応答変数が質的データであっても分析可能にしたのが一般化線形モデルである。一般化線形モデル（GLM：Generalized Linear Model）は一般線形モデルと異なり、指数型分布など正規分布以外に従う応答変数を予測する際にも使われる。説明変数との関係を推計ため、一般化線形モデルではlink関数を用いて変換した応答変数を用いる。Link関数とは応答変数を説明変数と線形関係になるよう変換する関数である。このような一般化線形モデルで最も使われている分析方法がロジスティック分析である。
+
+ロジスティック回帰は、link関数にロジットを用いる。結果応答変数は必ず0-1の間となるため、確率を表すに適している。例えば、ある事件（event）が発生するか否かをロジスティック回帰モデルに当てはめると、その事件が発生する確率を予測することとなる。分析した結果、応答変数の値、すなわち確率が0.5より大きいとその事件が発生すると予測し、0.5を下回るとその事件が発生しないと予測する。ロジスティック分析における説明変数と応答変数との関係を示すとシグモイド曲線と呼ばれるS字形の曲線になる。
+
+パラメータ推定の方法も一般線形モデルと一般化線形モデルでは異なる。一般線形モデルでは最小二乗法を用いてパラメータ推定を行う。最小二乗法は実測値と予測値の差である残差（residuals）の二乗和が最小になるパラメータを推定する方法である。これは、誤差は等分散正規分布となっているため、説明変数が1単位変化した際に応答変数がどのぐらい変化したのかを把握することが可能であることを利用している。一方ロジスティック回帰を含めた一般化線形モデルでは、最小二乗法を用いることができない。応答変数が質的データであるゆえ、説明変数との間に線形関係が存在せず、説明変数が1単位変化した際に被説明変数がどのぐらい変化したのかを把握することが難しいためである。従って、ロジスティック分析では最尤推定法 (Maximum Likelihood Estimation) という別の手段でパラメータ推定を行う。最尤推定はパラメータを変数、説明変数を定数とし、実測値が得られる最大の確率を知る手法である。
+
+尤度比検定は最尤推定量を入れた尤度関数を用いて、帰無仮説の棄却を行う統計検定である。まず、帰無仮説に対する最尤推定量、対立仮説に対する最尤推定量それぞれを求める。次にそれぞれを尤度関数に代入し、その比をとる。ここで得られた比が、漸近的には自由度$(H_0 - H_1)$の$χ$二乗分布に従うことを利用したのが尤度比検定である。
+
+ロジスティック回帰は最尤推定と尤度比検定を用いて統計解析を行うが、問題を抱えている。まず尤度比検定はサンプル数が大きいことを想定した検定であるため、サンプルが小さい場合に不正確になってしまうという問題がある。また、独立性について検定するため分割表を使用する際、疎であると最尤推定ができない場合も多い。偏りの大きいデータに対しても正確に検定を行うことが難しい\cite{10.2307/2288420, 10.2307/2289388, mehta1998exact, mehta1995exact,10.1198/00031300283}。それらの問題を回避する方法の一つとしてExact logistic regression が提案されている。
+
+%Coxは、一つのパラメータに対して、正確な「P値と信頼区間」を求める事ができる手法を提案した。
+\section{背景：Exact logistic regression}
+Exact logistic regressionはCoxによって70年代に提案された統計的仮説検定で、関心のある回帰係数パラメータに対応した十分統計量の正確なパーミュテーション分布を、それ以外の回帰係数パラメータに対応した十分統計量を固定（条件つけ）して推定する、正確な条件付き推定である\cite{cox1970analysis}。
+この手法は、得られる推定値は漸近的な結果に依存しておらず、帰無仮説の元で検定統計量がその値となる確率である$p$値や信頼区間に対する正確な数値が得られる。
+そのため、最尤推定を適用できない場合、すなわち通常のロジスティック回帰に対してサンプルサイズがとても小さい場合、データが疎あるいは同じ値をもつなど偏っている場合にexact logistic regressionは有効である\cite{10.2307/2288420, 10.2307/2289388, mehta1998exact, mehta1995exact}。
+一方この手法は計算がNP完全であるという重大な欠点をもつ。これまで、Coxが発表してから10年以上経った1984年にはじめてアルゴリズムが提案されて以降\cite{10.2307/2288420}、最近ではMCMCを用いたアルゴリズムなども発表されているが\cite{mehta2000efficient}、多くの変数を持った大規模データに対し適用可能なアルゴリズムは未だに開発されていない。
+
+\section{背景：イジングマシン}
+イジングモデルは社会に多く潜んでいる組合せ最適化問題を高速に解くことができる手法である。組み合わせ最適化問題の例とし、ルート最適化や配置問題などが挙げられる。さらにイジングモデルを利用した人工知能を支える機械学習アルゴリズムが様々開発されている。よって、さらなる研究開発が進み、高速に大規模問題を解くことができるようになることが期待されている。
+このような社会背景から、現在イジングモデルを搭載したあらゆるイジングマシンが開発されている。
+以下の表\ref{tb:ising_machine}にイジングマシンの具体例を示す\cite{d-wave, maezawa2019toward, digital_annealer, cmos, sbm, tsubasa, hamerly2019experimental}。
+大別すると、量子アニーリングと、シュミレーテッドアニーリングがある。
+量子アニーリングは高速で、よりシュミレーテッドアニーリングよりも厳密解に近い答えが得られるとされている一方、解くことのできる問題サイズが限定されている。
+シュミレーテッドアニーリングは、量子アニーリングよりも大きな問題を解くことができ、特別な冷却装置不要で常温で安定動作が可能である。
+例えば文献\cite{hamerly2019experimental}のように各マシンを比較検討した論文もあるが、実際には両方式を正確に比較した研究が少ないの現状である。
+
+\begin{landscape}
+\begin{table}[hbtp]
+	\caption{イジングマシンの製品比較}
+	\label{tb:ising_machine}
+	\scalebox{0.7}[1]{
+	\centering
+	\begin{tabular}{lccccccc}
+		\hline
+		&\multicolumn{7}{c}{イジング方式} \\
+		&\multicolumn{2}{c}{量子アニーリング} &\multicolumn{4}{c}{シミュレーション} & レーザー\\
+		& D-wave & 産総研 & 富士通 & 日立 & TOSHIBA & NEC & NTT \\
+		\hline\hline
+		製品名 & D-wave 2000Q & 未公開 & デジタルアニーラ & CMOSアニーリング & シュミレーテッド分岐マシン & SX-Aurora TSUBASA & コヒーレントイジングマシン\\
+		ステータス & 商品化 & 研究開発中 & 商品化 & 商品化 & 商品化 & 商品化 & 研究開発中\\
+		実装方式 & 超電導回路 & 超電導回路 & ASIC & GPU/ASIC・FPGA & HWに非依存 & ベクトル計算機 & レーザー + FPGA\\
+		規模 & 2, 048 & 未公開 & 8, 192 & 100, 000 & 100, 000 & 100, 000 & 2,000\\
+		結合の仕方 & 隣接結合 & 未公開 & 全結合 & 全結合/疎結合 & 全結合 & 全結合 & 全結合\\
+		\hline
+	\end{tabular}
+	}
+\end{table}
+\end{landscape}
+
+\section{背景：量子アニーリング}
+暗号解読のため第二次世界大戦の最中開発されたコンピュータは、真空管からトランジスタへと材料は変わったものの、ノイマン型と呼ばれる方式で現在まで開発されてきた。
+性能の改善は、CPUなどの機能を作り出す集積回路に含まれるトランジスタの数を増やす（トランジスタの大きさを小さくする）ことで行われてきた。
+しかしこの従来の方法による性能改善が限界を迎えている。トランジスタの大きさをこれ以上小さくしようとすると原子以下になってしまい、
+今までの考え方が通用しなくなるからだ。これは一般にムーアの法則の限界として知られている。
+そこで、新素材開発、あるいは非ノイマン型のコンピュータ開発が進められている。
+またコンピュータにおける消費電力量も問題となっている。
+2013年時点でコンピュータを中心とするITが消費する電力は年間1500TWhにのぼり、世界の発電量の1割にもなっている。
+Google, Amazonといった巨大IT企業が冷却に必要な電力を減らすため比較的気温の低い地域にデータセンターを設置したり、再生エネルギーの導入に腐心していることから危機感が見て取れる。
+
+そのような背景のもと、近年量子アニーリングが注目されている。
+量子アニーリングは西森らによって1998年に開発された、量子効果を用いて組合せ最適化問題を解く特化型コンピュータである\cite{kadowaki1998quantum}。
+量子は原子あるいはそれ以下の大きさである物質やエネルギー単位の総称であり、古典物理学ではなく量子力学に従う。
+よって量子の重ね合わせや量子干渉といった性質を用いることで、高速計算が可能となる。
+
+さらに消費電力も少ない。超伝導量子ビットを使った量子アニーリングは、CPUとメモリを合わせたチップの冷却用以外にほとんど電力を使わない上、極低温に冷却する部分はシステムが大きくなっても小さいままであるため、よりずっと大きなシステムになっても消費電力は基本的には変わらないからだ。
+例えば量子アニーリングの消費電力は20kWである一方、スーパーコンピューター京は12MWである。能力が発揮される分野が異なるものの、600倍も節電が実現されている。
+ちなみに、日本の一般家庭では年間400W消費するため、京は3万軒分の消費電力である。
+
+また、量子を用いるコンピューティングとしてゲート式という手法もあるが、量子アニーリングはゲート式と比較してシステムの安定性に優れているため、
+搭載ビット数の多い実機が既に商用マシンとして開発され、比較的容易に利用できる利点がある\cite{nishimori}。
+
+
+\section{主結果}
+本研究では量子アニーリングを用いてExact logistic regressionを現実的な時間内に行う手法を提案し、
+実際に量子アニーラの実機を用いて実験を行なった。
+Exact logistic regressionのP値計算におけるサンプリングを、イジングモデルの基底状態サンプリングとして定式化した。
+基底状態サンプリングは、古典計算機におけるSA、及びQAを用いて実装した。
+各手法と比較検討した結果、SA、QAとも、全列挙と比べて大幅に計算量を削減することで、Exact logistic regressionを行うことが可能だとわかった。
+
+\section{本論文の構成}
+\ref{sec:propose}章では、以降の章で必要な用語と、
+イジングマシンを用いたExact logistic regressionを説明する。 
+\ref{sec:ex}章では、実データを用いて、各手法を用いたP値計算における、
+計算時間と精度の比較を行う。
+\ref{sec:cncls}章では、 本論文をまとめる。
+
+
+\chapter{本論}
+\label{sec:propose}
+
+\section{イジングモデル}
+イジングモデルは、統計数学において強磁性体の振る舞いを数理的に考察するために導入された。
+上向き、または下向きのスピンが構成され、隣接するスピン間の相互作用及び外部から与えれた磁場の力によって状態が変化し、最終的には系全体のエネルギーが最小となることが期待される。
+与えられた格子上の格子点$i$に磁性の根源であるスピンを意味する二値変数$s_i  \in\{+1, -1\}$を定義する。強磁性体では隣接するスピン変数は相互作用の結果、互いに同じ値を取ろうとする傾向があると考えられる。この性質を示したハミルトニアンが以下の式\ref{eq:ising}である。
+\begin{eqnarray}
+	H_{ising}(s) = \sum_{i=1}^{N}h_i s_i +  \sum_{i}\sum_{i<j}J_{i, j} s_i s_j
+	\label{eq:ising}
+\end{eqnarray}
+ここで$J > 0$は相互作用の強さ、$h$は外部磁場、$(ij)$は隣接する格子点の対をそれぞれ表している。
+
+また数学的に同じ意味であるモデルとして二次制約なし二値最適化(QUBO:Quadratic unconstrained binary optimization)がある。こちらは、二値変数がバイナリとなっており、以下の式\ref{eq:qubo}で表される。
+\begin{eqnarray}
+	H_{qubo}(x) = \sum_{i=1}^{N}a_i x_i +  \sum_{i}\sum_{i<j}b_{i, j} x_i x_j + c
+	\label{eq:qubo}
+\end{eqnarray}
+コンピューターサイエンスでは0 ,1の二値変数を扱うことのほうが多く、イジング模型よりもQUBOが利用される。
+またQUBOは通常、$a_i$を非対角成分に、$b_{ij}$を対角成分においた上三角行列で表す。
+
+イジングモデルからQUBOへの変換、またその逆への変換も可能である。
+具体手的には、イジングモデルにおける二値変数を
+\begin{eqnarray}
+	x_i \mapsto　\dfrac{s_i + 1}{2}
+\end{eqnarray}
+とすることでQUBOへ変換することが、
+QUBOにおける二値変数を
+\begin{eqnarray}
+	s_i \mapsto　2x_i - 1
+\end{eqnarray}
+とすることでイジングモデルへと変換を行うことができる。
+
+またイジング及びQUBOはどちらも二値二次モデル(BQM: binary quadratic model)に分類され、これらに定式化される問題は変数が増えるにつれて一般に解くことが難し
+くなり、基底状態を得るためにかかる時間が増加する。この性質をNP困難であるという\cite{barahona1982computational}。
+
+
+\section{量子アニーリング}
+量子アニーリングはイジング模型の基底状態を、量子効果を使って求める技術である。
+なんらかの課題を量子アニーリングを用いて解くには、まずは課題を組み合わせ最適化問題としてモデル化し、イジングモデルあるいはQUBOに定式化したのち、量子アニーラに投入することで行うことが実施が可能となる。結果、組み合わせ最適化問題における大域（グローバル）最適解を得ることができる。
+
+以下の式\ref{eq:qa}を量子アニーリングのイジングモデルとすると、組み合わせ最適化問題は、 $\{J_{ij}, h_i\}$が与えられた時、 エネルギー$H(\bm{\sigma})$を最小にする$\bm{\sigma}$を求める問題といえる。
+\begin{eqnarray}
+	\label{quantum}
+	H_{qa}(\bm{\sigma}) = \sum_{i<j}J_{ij}\sigma_i \sigma_j + \sum_{i=1}^{N}h_i\sigma_i\\
+	\sigma_i \in\{-1、+1\}\nonumber
+	\label{eq:qa}\nonumber
+\end{eqnarray}
+このとき、$J_{ij}$がスピン間の相互作用を、 $h_i$が局所磁場を調整するパラメータを表している。
+量子アニーリングの仕組みは以下である。
+量子アニーリングでははじめ、 量子トンネル効果(横磁場項)を大きくし、 各スピンの状態を不確定、 つまり$\pm1$を等確率で重ね合わせた状態に設定する。
+そして、 量子力学の核であるシュレディンガー方程式に従って自律的に変化していくことで、量子効果が徐々に小さくなり、 相互作用$J_{ij}$や局所磁場$h_i$の影響が大きくなっていく。
+すると各スピンの状態が$\pm1$のどちらかに確定した状態が自律的に選ばれ、 それがイジングモデルの基底状態となる。
+つまり、 解きたい問題を$+1, -1$の値をとる変数を持つ(\ref{quantum})式に落とし込み、 量子アニーリングを行うと、
+その問題における目的関数$H(\bm{\sigma})$が最低エネルギーをとるような$\bm{\sigma}$が確率的に求まる。
+
+カナダのD-Wave Systems Inc.は量子アニーリングの動作原理が実装されたハードウェアを世界で初めて開発し、
+現在ではクラウド経由で利用できるD-Wave2000Qが提供されている\cite{dwave}。
+現在D-Wave2000Qで扱うことのできる最大スピン数は2048個である。 
+このD-Wave2000Qで採用されているグラフ構造(ワーキンググラフ)はキメラグラフと呼ばれ、
+任意の$i,j(i<j)$の組に対して$J_{i,j}$を設定できるわけではない。
+そのためには、 複数のスピンを仮想的な1つのスピンとみなすことで、 全結合グラフを再現する必要がある。
+全結合グラフを作る際に扱えるスピン数は、 最大で64となる。
+エネルギーを最小にする基底状態が複数ある場合には、量子アニーラを用いて、
+基底状態のサンプリングを行うことができる\cite{mandra2017exponentially}。
+本研究では、この性質を生かし、統計検定への応用を行う。
+
+\section{Exact logistic regression}
+Exact logistic regressionとは、検定したい回帰係数パラメータの有意性を正確に推定する手法である。
+
+まず以下に示すデータを与える。
+\begin{itemize}
+\item $n$個の独立した標本データ
+\item それぞれのデータに対する共変量を以下のように定義する。
+\begin{itemize}
+	\item $x_{ij} \in\{0, 1\}, ~~ \mathbf{X}_j = [x_{1j}, \dots, x_{ij}, \dots , x_{nj}], ~~　\mathbf{X} = [\mathbf{X}_1, \dots, \mathbf{X}_j, \dots , \mathbf{X}_m]$
+	\item 検定したい目的説明変数$X_k$(第i標本データにおいては$x_{ik}$)
+\end{itemize}
+\item それぞれのデータの応答変数は以下のように定義する
+\begin{itemize}
+	\item $y_i \in\{0, 1\}, ~~ \mathbf{Y} = [y_1, \dots, y_i, \dots , y_n]$
+\end{itemize}
+\end{itemize}
+
+以上のデータが与えられた際、共変量に対するロジスティック回帰モデルは、以下のように表される。
+\begin{eqnarray}
+	\log　\dfrac{\theta_i}{1- \theta_i} = \mathbf{x}^T_i \boldsymbol{\beta}
+\end{eqnarray}
+このとき $\mathbf{x}_i =(x_{i1}, \dots , x_{im})$は第$i$標本における$m$個の
+共変量ベクトルであり、$~~ \boldsymbol{\beta} = (\beta_1, \dots , \beta_m)^{T}$は$m$個の回帰係数パラメータベクトルである。
+
+Exact logistic regressionでは、パラメータを関心のある目的変数の回帰係数パラメータと、それ以外である局外パラメータに分ける。
+そして局外パラメータの十分統計量の実現値で条件をつけて
+目的パラメータの推測を行う。
+
+Exact logistic regressionでは十分統計量として以下を使用する。
+\begin{eqnarray}
+	t_0= \sum_{i=1}^n y_i\\
+	t_j= \sum_{i=1}^n x_{ij} y_i 
+\end{eqnarray}
+
+そして$t_k$以外に対して以下のように条件付けをし、条件を満たす$\mathbf{Y}$を全列挙する。$\hat{t}_j$は元々のデータセットにおける$\mathbf{Y}$に対して計算した十分統計量を表している。
+\begin{eqnarray}
+	\mathbf{Y} = \{y|t_0=\hat{t}_0,  t_j=\hat{t}_j, ~~ j \neq k\}
+	\label{eq:sufstatistic}
+\end{eqnarray}
+
+式(\ref{eq:sufstatistic})を満たすすべての$Y$サンプルに対し$t_k$を計算し、その値以下の割合を$p$値とする。
+\begin{eqnarray}
+	P(t_k=\hat{t}_k| t_0=\hat{t}_0,t_j=\hat{t}_j) = \dfrac{\sum^{\hat{t}_k}c( t_k=\hat{t}_k, t_j=\hat{t}_j)}{\sum_{u} c( t_k=u, t_j=\hat{t}_j)}\\
+	j \neq k \nonumber
+\end{eqnarray}
+
+$c(\alpha=\hat{\alpha}, \beta=\hat{\beta})$は$\alpha=\hat{\alpha}, \beta= \hat{\beta}$を満たすYの個数を表している。
+以上がExact logistic regressionの手順である。
+
+\section{イジングマシンを用いたExact logistic regression}
+本研究では、条件を満たす$Y$を得る過程にて全列挙を行わず、イジングマシンによるサンプリングにより評価する。
+イジングマシンにおいては、QUBOを最小化する基底状態（最適解）を探索する。
+基底状態が複数あるときは、文献\cite{sundar2019quantum}でも示されているように、その中からサンプリングを行うことができる。
+Exact logistic regressionをイジングマシンを用いて行うには、
+式(\ref{eq:sufstatistic})を満たす解が基底状態になるようなハミルトニアンを設計する必要がある。
+ここでは以下のように設定した。
+\begin{eqnarray}
+	H = (t_0 - \hat{t}_0)^2 + (t_j - \hat{t}_j)^2\\
+	j \neq k \nonumber
+\end{eqnarray}
+
+量子アニーリングを用いたExact logistic regressionの手順は、以下の通りである。
+まず解きたい問題をQUBO形式にし、量子アニーラへ入力する。
+量子アニーラにおいて複数回の基底状態探索を繰り返すことで、複数の基底状態をサンプリングすることができる。しかしながらアニーリングマシンでは、得られる状態が基底状態ではなく、励起状態（すなわち，式(\ref{eq:sufstatistic})が満たされない解）が得られる場合がある。そのため、得られた解が望みの解になっているかは選別する必要がある。
+
+Exact logistic regressionでは、検定したい特徴量と元のデータにおける応答変数との内積値$t_k$がどれほど有意かを知ることによる統計検定であるため、
+得られたサンプルから、検定したい特徴量とサンプルとの内積値が
+$\hat{t}_k$以下となるサンプルの割合$p$を計算する。
+
+もし例えば有意水準を$α=0.05$と定めていたら、$p < 0.05$となるとき元のデータが有意である（対立仮説を棄却しない）とわかり、
+そうでない場合は元のデータは有意でない（帰無仮説を棄却しない）とわかる。
+
+以上が量子アニーリングを用いたExact logistic regressionである。
+
+\chapter{実験}
+\label{sec:ex}
+本章ではイジングマシンとしてSAまたはQAを用いてExact logistic regressionを行い、 その性能を全列挙手法を用いたExact logistic regressionと比較し、評価を行った。
+
+\section{実験環境}
+実験用のデータには、骨肉腫データを用いた\cite{jaffe1983osteosarcoma}。
+実験用のプログラムはPython3.7.0を用いて実装した。 
+全列挙手法として4ti2ソフトウェア(\url{https://4ti2.github.io/})に含まれるzsolveを利用した。
+SAとしてD-Wave　Systems Inc.が提供する、量子アニーリングでイジングやQUBO問題を解くPython製パッケージOcean(\url{https://docs.ocean.dwavesys.com})に含まれるnealのSimulatedAnnealingSamplerを利用した。
+QAとしてD-Wave Systems Inc.のD-Wave2000Qを、クラウドサービスであるLeap(\url{https://cloud.dwavesys.com})を介して利用した。
+
+\subsection{骨肉腫データ}
+\label{sec:ost}
+骨肉腫データは46標本を含む単変量解析結果のデータである\cite{jaffe1983osteosarcoma}。骨肉腫データのうち特徴量は3つ使用し、スケーラビリティを評価するため、データ点を20 点、25 点、30 点、35 点、40 点にダウンサンプリングしたものを使用した。各データ点数に関して、５種類のデータセットを用意した。以降、作成した25個のデータセットを骨肉腫データセットと呼ぶことにする。説明変数は文献\cite{jaffe1983osteosarcoma}で実施された多変量解析にて有意性が認められた共変量であり、１つ含まれている。説明変数はリンパ球浸潤の有無(LI。有＝1、無＝0)を、それ以外の共変量は性別(SEX。女性=1、男性=0)、オステオイド（類骨）になんらかの病理が観察されるか否か(AOP。有=1、無=0)である。応答変数も二値変数であり、無再発生存が3年以上だったか否か（DFI3。以上＝1、未満＝0）を示している。
+表\ref{tb:ost}に詳細を記載する。
+
+\begin{table}[hbtp]
+	\caption{骨肉腫データ}
+	\label{tb:ost}
+	\centering
+	\begin{tabular}{ccccc}
+		\hline
+		LI & SEX & AOP & DFI3=1となるデータの割合\\
+		\hline\hline
+		0 & 0 & 0 & 3/3 (100\%)\\
+		0 & 0 & 1 & 2/2 (100\%)\\
+		0 & 1 & 0 & 4/4(100\%)\\
+		0 & 1 & 1 & 1/1(100\%)\\
+		1 & 0 & 0 & 5/5(100\%)\\
+		1 & 0 & 1 & 3/5(100\%)\\
+		1 & 1 & 0 & 5/9(100\%)\\
+		1 & 1 & 1 & 6/17(100\%)\\
+		\hline
+	\end{tabular}
+\end{table}
+
+
+%autoを使用
+\section{実験結果}
+以下に実験結果を示す。
+
+\subsection{結果1: チェーン強度とチェーンの破壊割合、チェーン強度とサンプル数}
+\label{sec:chain}
+D-Waveマシンはサンプリングを行う際、パラメータのひとつであるチェーン強度を調節することができる。
+チェーンとは、１つの論理ビットを表すために複数の物理量子ビットをつなぐものを指し、
+論理ビットをワーキンググラフ上に定義された物理量子ビットへと埋め込む際に必要に応じて用いる\cite{d-wave}。
+そこでD-waveを用いたサンプリングを実行するにあたり、事前にデータ点ごとに適切なチェーン強度を探索した。
+適切さは、チェーンの破壊割合とサンプル数によって判断した。
+
+各骨肉腫データセットを用いて、チェーン強度を10, 15, 20, 25, 30 ,35と変化させサンプリングを実行した。
+結果を図\ref{fig:broken}と、図\ref{fig:chain_num_sample}に示す。
+各々y軸にデータを、x軸にチェーン強度を配置した。
+
+\begin{figure}
+	\begin{center}
+		\includegraphics[width=130mm]{./figure/QA/broken_chain_proportion.png}
+	\end{center}
+	\caption{チェーン強度とチェーンの破壊割合}
+	\label{fig:broken}
+\end{figure}
+
+\begin{figure}
+	\begin{center}
+		\includegraphics[width=130mm]{./figure/QA/chain_strength_valid_y_num.png}
+	\end{center}
+	\caption{チェーン強度とサンプル数}
+	\label{fig:chain_num_sample}
+\end{figure}
+
+図\ref{fig:broken}より、データサイズが大きいほど弱いチェーン強度ではチェーンが壊れやすいことがわかる。
+また図\ref{fig:chain_num_sample}から、データサイズが小さいほどサンプル数が多くなるチェーン強度が小さいことがわかる。
+以上の実験から20-40点のデータに対する最適チェーン強度を決定し、以下の表\ref{tb:chain_strength_datasize}にそれらの結果をまとめた。
+
+\begin{table}[hbtp]
+	\caption{データサイズと最適チェーン強度}
+	\label{tb:chain_strength_datasize}
+	\centering
+	\begin{tabular}{lccccc}
+	  \hline
+	  &\multicolumn{5}{c}{データ点} \\
+	  & 20 & 25 & 30 & 35 & 40 \\
+	  \hline\hline
+	  最適チェーン強度 & $15$ & $15$ & $15$ & $20$ & $20$\\
+	  \hline
+	\end{tabular}
+\end{table}
+
+%autoを使用
+\subsection{結果2: 全列挙とSA, QAの比較}
+\label{sec:time_compare}
+結果\ref{sec:chain}よりQAにおける各データ点に対するチェーン強度を決定したため、以降ではExact logistic regressionにおけるサンプリングを実行する。
+SAとQAに関して、各骨肉腫データセットから10000個のサンプルを生成する実験を行った。
+両手法とも、全てのサンプルが基底状態に達するわけではないため、基底状態に達したサンプルを有効サンプルと呼ぶことにする。
+全列挙との比較を目的としているため、全列挙が実施できた30点までの実験結果を以下の表\ref{tb:20bit_time_p_diff}、表\ref{tb:25bit_time_p_diff}、表\ref{tb:30bit_time_p_diff}に示す。
+
+\begin{table}[hbtp]
+	\caption{20bitでの全列挙との比較}
+	\label{tb:20bit_time_p_diff}
+	\centering
+	\begin{tabular}{lccc}
+		\hline
+		手法& 計算時間 & 有効サンプル数 & p値誤差\\
+		\hline\hline
+		全列挙&$1.22$ & $4.42 \times 10^3$&$0$\\
+		SA  &$4.25$&$2.60 \times 10^3$&$4.21 \times 10^{-4}$\\
+		QA &$2.40$&$2.04 \times 10^2$&$6.89 \times 10^{-2}$\\
+		\hline
+	\end{tabular}
+\end{table}
+
+\begin{table}[hbtp]
+	\caption{25bitでの全列挙との比較}
+	\label{tb:25bit_time_p_diff}
+	\centering
+	\begin{tabular}{lccc}
+		\hline
+		手法& 計算時間 & 有効サンプル数 & p値誤差\\
+		\hline\hline
+		全列挙&$5.84 \times 10^2$ & $2.79 \times 10^4$&$0$\\
+		SA  &$5.84$&$6.48 \times 10^3$&$4.26 \times 10^{-3}$\\
+		QA &$2.40$&$9.1 \times 10^1$&$4.59 \times 10^{-2}$\\
+		\hline
+	\end{tabular}
+\end{table}
+
+\begin{table}[hbtp]
+	\caption{30bitでの全列挙との比較}
+	\label{tb:30bit_time_p_diff}
+	\centering
+	\begin{tabular}{lccc}
+		\hline
+		手法& 計算時間 & 有効サンプル数 & p値誤差\\
+		\hline\hline
+		全列挙&$5.48 \times 10^4$ & $3.02 \times 10^4$&$0$\\
+		SA  &$7.60$&$9.21 \times 10^3$&$6.11 \times 10^{-3}$\\
+		QA &$2.40$&$8.2 \times 10^1$&$6.26 \times 10^{-2}$\\
+		\hline
+	\end{tabular}
+\end{table}
+
+まず計算時間について、SA、QAどちらもとくにデータ点が大きくなるにつれて全列挙よりも大幅に短くなっており、SAでは最大$7.2 \times 10^3$倍、QAでは最大$2.28 \times 10^4$倍短くなった。
+次に有効サンプル数について、SAは、どのデータ点においても全列挙には及ばないもののQAよりは多くの有効サンプル数を得られていた。また、QAにおいてはデータ点が増えるにつれて有効サンプル数が減ったが、SAは減るどころがむしろ増えた。
+最後に全列挙との$p$値誤差について、SAはどのデータ点においても最大でも$6 \times 10^{-3}$ほどの誤差に収まっていた。一方QAは$6 \times 10^{-2}$ほど誤差が生じていた。
+以上の結果から、どちらもExact logistic regressionにおける欠点である膨大な計算量を解決する手段としての可能性を示すことができた。しかし現時点ではSAのほうが有効であり、QAは今後マシンにおいてエラー率が減るよう、技術発展を期待したい。
+
+\subsection{結果3: SAとQAにおける計算時間の比較}
+\label{sec:time_SAQA}
+SAとQAについて、計算時間に注目をし比較を行った。
+両手法ともアニーリング箇所にかかる時間を計測した。
+とくにQAは\textup{qpu access time}と呼ばれる時間を計測した。
+この時間は、\textup{qpu programming time}と\textup{qpu sampling time}に大別される。
+
+\textup{qpu programming time}には以下の工程が含まれている。
+\begin{itemize}
+	\item $h$と$J$の値をQPU 上のデジタル・アナログ変換器(DAC) へ伝達する。
+	\item 電子回路がDAC をプログラムするための生の信号を生成し、それが冷凍機内へワイヤを介して送信される。
+	\item DAC は量子ビットとカプラーに対し局所的に、静的な磁気制御信号を印加する。 (以上をプログラミングサイクルという)
+	\item QPUを冷却する (通常$1ms$)。
+\end{itemize}
+
+\textup{qpu sampling time}には以下の工程が含まれている。
+\begin{itemize}
+	\item アニーリングを実行する。(\textup{annealing time})
+	\item 物理量子ビットのスピン状態を読み出して返す。
+	\item QPUを冷却する。
+	\item これをユーザーが指定した回数(\textup{num reads})繰り返す。
+\end{itemize}
+
+\begin{figure}
+	\begin{center}
+		\includegraphics[width=130mm]{./figure/QPU_access_time.png}
+	\end{center}
+	\caption{qpu access timeの詳細}
+	\label{fig:qpu_access_time}
+\end{figure}
+
+また\textup{annealing time}は\textup{qpu access time}に含まれ、任意で設定することが可能であるが、値を変えても有効サンプル数に変化が見られなかったので、初期設定時間を使用した。
+結果を図\ref{fig:SA_QA_total_time}に示す。
+両手法とも40点まで実行可能であり、有効サンプルを得ることができたため、40点までに含まれる各5つの骨肉腫データの計測結果を、誤差範囲付き平均で表している。
+
+\begin{figure}
+	\begin{center}
+		\includegraphics[width=130mm]{./figure/eq/_40bit_total_calculation_time_mean_std.png}
+	\end{center}
+	\caption{計算時間の比較　(SA, QA)}
+	\label{fig:SA_QA_total_time}
+\end{figure}
+
+結果図\ref{fig:SA_QA_total_time}から、SAはデータ点が増えるにつれて計算時間が増える一方、QAはデータ点が増えても計算時間が増えないことがわかる。
+
+一般に、問題設定が同じである場合、データ点が増えれば増えるほど問題を解く際に必要な時間は増える。
+そのため古典コンピューター上で解いているSAはたしかにデータ点が増えるにつれて時間が増えていることが確認できる。
+一方量子性を用いた量子アニーリングは、全ての組み合わせを重ね合わせた状態からアニーリングを始めることができるため、問題のデータ点が増えても時間が増えにくいと言われている。
+今回の結果からも確かに、QAにおいて計算時間がデータ点の増加に従って増えていないことが確認できた。
+しかし、結果\ref{sec:time_compare}で示したように、QAはSAと比較して、得られた有効サンプル数がどのデータ点においても少ない。
+%また 1有効サンプルを得ることができる時間という観点でも、QAはSAよりも劣っていることが、\ref{label}からもわかる。
+よって、計算時間という点においてはQAがSAよりも良い結果が得られたとしても、全体としてQAがSAよりも性能が優っているとはいい難い。
+
+\subsection{考察}
+結果\ref{sec:time_compare}・結果\ref{sec:time_SAQA}から、QAはSAよりも性能が悪いという結果となった。
+以下考えられる原因を挙げる。
+
+まず、この問題が量子アニーリングに不向きな問題だったという点である。
+量子アニーリングがシュミレーテッドアニーリングよりも優っているという研究もあれば\cite{denchev2016computational}、その反例もある\cite{ronnow2014defining}のが現状である。
+また、本研究では量子アニーリングをサンプリングに適用したが、最適化問題として扱うことが一般的であり、サンプリングとしての使用例は少ない。
+以降発表されるサンプリングとしての利用している研究と比較を行いたい。
+
+次に、統合制御エラー(ICE)が考えられる\cite{d-wave}。
+D-waveシステムを利用してQAを行うと、たとえユーザーが$\{h, J\}$を指定しても、D-wave QPUにこれらの値を実装すると、実際は以下の式\ref{eq:ice}のようにわずかに誤差を含む問題を解く。
+\begin{eqnarray}
+	H_{ice}(s) = \sum_{i=1}^{N}(h_i + \delta h_i) s_i +  \sum_{i}\sum_{i<j}(J_{i, j} + \delta J_{i, j}) s_i s_j
+	\label{eq:ice}
+\end{eqnarray}
+この原因は総称してICEと呼ばれている。
+ICEの中には、接続されていない量子ビットに対してもあたかも接続しているかのような効果をもってしまう現象、
+$(h, J)$の大きさによるものなどが含まれる。
+これらの要因が合わさって、本来解きたい問題を正確にハードウェアに埋め込むことができず、厳密解を得ることができなかったと考えられる。
+この対処法として、スピン変換という方法がある。
+この方法は、いくつかの論理スピンの向きを変えることで、解く問題の性質を変えずに、係数の誤差を平均化して軽減する方法である。
+一つの論理スピンの向きを変更することで、
+\begin{eqnarray}
+	s_p　\rightarrow s'_p = -s_p \\ \nonumber
+	h_p　\rightarrow h'_p = -h_p \\ \nonumber
+	J_{i,j}　\rightarrow J'_{i,j}　 = -J_{i,j}　\\ \nonumber
+	\mbox{for either $i=p$ or $j=p$}
+\end{eqnarray}
+が実現される。
+D-waveでは変換する論理スピンの数を指定することができる。
+実際に本研究にてスピン変換をデータ点ごとに、$0-20$, $0-25$, $0-30$, $0-35$, $0-40$個変更し実験をおこなったが、改善は見られなかった。
+%古典コンピューターのエラー訂正は今までかなり研究がなされてきた
+また、現状の量子アニーラにおいてアニーリング時間に対してコヒーレンス時間が短い。
+コヒーレンス時間とは量子状態が存在している時間であり、
+とくに今回のD-wave 2000Qのように超電導ニオブ磁束量子ビットを用いた量子アニーラは、$100 ns$と短いと言われている\cite{harris2010experimental}。
+コヒーレンス時間が短いと、トンネル効果など量子特有の性質をもつ時間が短くなるため量子計算に悪影響が生じる。
+そこで現在各社コヒーレンス時間を延ばす研究開発を行っている。
+%Googleは、量子ビットのコヒーレンスと超電導量子を改善する新しい方式の超電導量子アニーリングマシンQuantum Annealer2.0を開発している。(出典が見つからなかった)
+例えばMITとNorthlop Grummanは、コヒーレンス時間の長いアルミニウム磁束量子ビットと３次元実装技術を利用した量子アニーリングマシンの開発をIARPAの支援のもとで進めている\cite{qeo}。
+
+
+\chapter{おわりに}
+\label{sec:cncls}
+本論文では\textup{Exact logistic regression}におけるサンプルを得る工程を、イジングマシンを用いて行う方法を提案した。
+そして実際に、 SA、またはQAの実機であるD-Wave2000Qを用いてサンプリングを行い、 全列挙と比較を行った結果を示した。
+結果から、SAまたはQAでは、全列挙の手法では計算不可能なサイズのデータに対してもExact logistic regressionを行うことができることがわかった。
+今後の展望として、 選択的推論への適用や、他のイジングマシンへの適用が挙げられる。
+
+\chapter*{謝辞}
+\label{sec:syazi}
+終始熱心なご指導を頂いた津田 宏治教授、田村 亮講師に感謝の意を表します。
+津田研究室の皆様から多くの刺激と示唆を得ることができました。感謝の意を表します。
+本当にありがとうございました。
+
+%%%%%%%%%%%%%%%%%%%% 参考文献 %%%%%%%%%%%%%%%%%%%%
+\bibliographystyle{plain}
+\bibliography{ref}
+
+\end{document}

@@ -1,0 +1,200 @@
+\begin{thebibliography}{10}
+
+\bibitem{10.2307/2289388}
+Computing distributions for exact logistic regression.
+\newblock {\em Journal of the American Statistical Association},
+  82(400):1110--1117, 1987.
+
+\bibitem{1qbit_}
+Clemens Adolphs Arman~Zaribafiyan Alipour, Elham and Maxwell Rounds.
+\newblock Quantuminspired hierarchical risk parity.
+\newblock
+  http://1qbit.com/files/white-papers/1QBit-White-Paper-^^e2^^80^^93-Quantum-Inspired-Hierarchical-Risk-Parity.pdf.
+\newblock 2021-01-24参照.
+
+\bibitem{barahona1982computational}
+Francisco Barahona.
+\newblock On the computational complexity of ising spin glass models.
+\newblock {\em Journal of Physics A: Mathematical and General}, 15(10):3241,
+  1982.
+
+\bibitem{cox1970analysis}
+DR~Cox.
+\newblock Analysis of binary data london: Methuen \&co, 1970.
+
+\bibitem{dwave_advantage}
+D-wave.
+\newblock D-wave advantage system an overview.
+\newblock
+  https://www.dwavesys.com/sites/default/files/14-1049A-A\_The\_D-Wave\_Advantage\_System\_An\_Overview\_0.pdf.
+\newblock 2021-01-10参照.
+
+\bibitem{d-wave}
+D-wave.
+\newblock D-wave system documentation.
+\newblock https://docs.dwavesys.com/docs/latest/.
+\newblock 2021-01-10参照.
+
+\bibitem{denchev2016computational}
+Vasil~S Denchev, Sergio Boixo, Sergei~V Isakov, Nan Ding, Ryan Babbush, Vadim
+  Smelyanskiy, John Martinis, and Hartmut Neven.
+\newblock What is the computational value of finite-range tunneling?
+\newblock {\em Physical Review X}, 6(3):031015, 2016.
+
+\bibitem{duverle2015privacy}
+David~A Duverle, Shohei Kawasaki, Yoshiji Yamada, Jun Sakuma, and Koji Tsuda.
+\newblock Privacy-preserving statistical analysis by exact logistic regression.
+\newblock In {\em 2015 IEEE Security and Privacy Workshops}, pages 7--16. IEEE,
+  2015.
+
+\bibitem{gwasCatalog}
+EMBL-EBI.
+\newblock Gwas catalog.
+\newblock https://www.ebi.ac.uk/gwas/home.
+\newblock 2021-01-10参照.
+
+\bibitem{hamerly2019experimental}
+Ryan Hamerly, Takahiro Inagaki, Peter~L McMahon, Davide Venturelli, Alireza
+  Marandi, Tatsuhiro Onodera, Edwin Ng, Carsten Langrock, Kensuke Inaba,
+  Toshimori Honjo, et~al.
+\newblock Experimental investigation of performance differences between
+  coherent ising machines and a quantum annealer.
+\newblock {\em Science advances}, 5(5):eaau0823, 2019.
+
+\bibitem{harris2010experimental}
+R~Harris, J~Johansson, AJ~Berkley, MW~Johnson, T~Lanting, Siyuan Han, P~Bunyk,
+  E~Ladizinsky, T~Oh, I~Perminov, et~al.
+\newblock Experimental demonstration of a robust and scalable flux qubit.
+\newblock {\em Physical Review B}, 81(13):134510, 2010.
+
+\bibitem{qeo}
+IIARPA.
+\newblock Qeo.
+\newblock https://www.iarpa.gov/index.php/research-programs/qeo.
+\newblock 2021-01-12参照.
+
+\bibitem{jaffe1983osteosarcoma}
+Norman Jaffe, John Knapp, Vincent~P Chuang, Sidney Wallace, Alberto Ayala, John
+  Murray, Ayten Cangir, Alexander Wang, and Robert~S Benjamin.
+\newblock Osteosarcoma: Intra-arterial treatment of the primary tumor with
+  cis-diammine-dichloroplatinum ii (cdp): Angiographic, pathologic, and
+  pharmacologic studies.
+\newblock {\em Cancer}, 51(3):402--407, 1983.
+
+\bibitem{dwave}
+Mark~W Johnson, Mohammad~HS Amin, Suzanne Gildert, Trevor Lanting, Firas Hamze,
+  Neil Dickson, R~Harris, Andrew~J Berkley, Jan Johansson, Paul Bunyk, et~al.
+\newblock Quantum annealing with manufactured spins.
+\newblock {\em Nature}, 473(7346):194--198, 2011.
+
+\bibitem{kadowaki1998quantum}
+Tadashi Kadowaki and Hidetoshi Nishimori.
+\newblock Quantum annealing in the transverse ising model.
+\newblock {\em Physical Review E}, 58(5):5355, 1998.
+
+\bibitem{10.1198/00031300283}
+Elizabeth~N King and Thomas~P Ryan.
+\newblock A preliminary investigation of maximum likelihood logistic regression
+  versus exact logistic regression.
+\newblock {\em The American Statistician}, 56(3):163--170, 2002.
+
+\bibitem{maezawa2019toward}
+Masaaki Maezawa, Go~Fujii, Mutsuo Hidaka, Kentaro Imafuku, Katsuya Kikuchi,
+  Hanpei Koike, Kazumasa Makise, Shuichi Nagasawa, Hiroshi Nakagawa, Masahiro
+  Ukibe, et~al.
+\newblock Toward practical-scale quantum annealing machine for prime factoring.
+\newblock {\em Journal of the Physical Society of Japan}, 88(6):061012, 2019.
+
+\bibitem{mandra2017exponentially}
+Salvatore Mandra, Zheng Zhu, and Helmut~G Katzgraber.
+\newblock Exponentially biased ground-state sampling of quantum annealing
+  machines with transverse-field driving hamiltonians.
+\newblock {\em Physical review letters}, 118(7):070502, 2017.
+
+\bibitem{mehta1995exact}
+Cyrus~R Mehta and Nitin~R Patel.
+\newblock Exact logistic regression: theory and examples.
+\newblock {\em Statistics in medicine}, 14(19):2143--2160, 1995.
+
+\bibitem{mehta1998exact}
+Cyrus~R Mehta and Nitin~R Patel.
+\newblock Exact inference for categorical data.
+\newblock {\em Encyclopedia of biostatistics}, 2:1411--1422, 1998.
+
+\bibitem{mehta2000efficient}
+Cyrus~R Mehta, Nitin~R Patel, and Pralay Senchaudhuri.
+\newblock Efficient monte carlo methods for conditional logistic regression.
+\newblock {\em Journal of the American Statistical Association},
+  95(449):99--108, 2000.
+
+\bibitem{ronnow2014defining}
+Troels~F R{\o}nnow, Zhihui Wang, Joshua Job, Sergio Boixo, Sergei~V Isakov,
+  David Wecker, John~M Martinis, Daniel~A Lidar, and Matthias Troyer.
+\newblock Defining and detecting quantum speedup.
+\newblock {\em science}, 345(6195):420--424, 2014.
+
+\bibitem{sundar2019quantum}
+Bhuvanesh Sundar, Roger Paredes, David~T Damanik, Leonardo Duenas-Osorio, and
+  Kaden~RA Hazzard.
+\newblock A quantum algorithm to count weighted ground states of classical spin
+  hamiltonians.
+\newblock {\em arXiv preprint arXiv:1908.01745}, 2019.
+
+\bibitem{10.2307/2288420}
+David Tritchler.
+\newblock An algorithm for exact logistic regression.
+\newblock {\em Journal of the American Statistical Association},
+  79(387):709--711, 1984.
+
+\bibitem{yano2016genome}
+Kenji Yano, Eiji Yamamoto, Koichiro Aya, Hideyuki Takeuchi, Pei-ching Lo,
+  Li~Hu, Masanori Yamasaki, Shinya Yoshida, Hidemi Kitano, Ko~Hirano, et~al.
+\newblock Genome-wide association study using whole-genome sequencing rapidly
+  identifies new genes influencing agronomic traits in rice.
+\newblock {\em Nature genetics}, 48(8):927, 2016.
+
+\bibitem{sbm}
+東芝デジタルソリューションズ 株式会社.
+\newblock 組合せ最適化ソルバー　simulated bifurcation machine.
+\newblock https://www.toshiba-sol.co.jp/pro/sbm/index\_j.htm.
+\newblock 2021-01-11参照.
+
+\bibitem{souyaku_fujitu}
+岩井大介.
+\newblock
+  富士通とペプチドリーム、高速かつ高精度に中分子医薬候補化合物の探索を実現~「デジタルアニーラ」活用で創薬プロセスを飛躍的に短縮、新型コロナウィルス感染症の
+  治療薬開発への適用を目指す~.
+\newblock https://pr.fujitsu.com/jp/news/2020/10/13c.pdf.
+\newblock 2021-01-24参照.
+
+\bibitem{kubo}
+久保拓弥.
+\newblock {\em
+  データ解析のための統計モデリング入門一般化線形モデル・階層ベイズモデル・MCMC}.
+\newblock 確率と情報の科学. 岩波書店, 2012.
+
+\bibitem{nishimori}
+大関真之 西森秀稔.
+\newblock {\em 量子アニーリングの基礎}.
+\newblock 共立出版株式会社, 2018.
+
+\bibitem{cmos}
+奥山 拓哉.
+\newblock 最適化ソリューション cmosアニーリングの活用事例.
+\newblock http://scsr.jp/document/20201124\_SCSR\_okuyama.pdf.
+\newblock 2021-01-11参照.
+
+\bibitem{tsubasa}
+日本電気株式会社.
+\newblock
+  Nec、量子コンピューティング領域に本格参入～スーパーコンピュータを活用したアニーリングマシンによる共創サービスを提供開始～.
+\newblock https://jpn.nec.com/press/201912/20191220\_01.html.
+\newblock 2021-01-11参照.
+
+\bibitem{digital_annealer}
+富士通株式会社.
+\newblock デジタルアニーラ.
+\newblock https://www.fujitsu.com/jp/digitalannealer/index.html.
+\newblock 2021-01-11参照.
+
+\end{thebibliography}

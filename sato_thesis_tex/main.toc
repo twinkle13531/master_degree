@@ -1,0 +1,23 @@
+\contentsline {chapter}{\numberline {第1章}はじめに}{3}{}%
+\contentsline {section}{\numberline {1.1}背景：ゲノムワイド関連解析とロジスティック回帰}{3}{}%
+\contentsline {section}{\numberline {1.2}背景：正確ロジステック回帰(Exact logistic regression)}{4}{}%
+\contentsline {section}{\numberline {1.3}背景：イジングマシン}{5}{}%
+\contentsline {section}{\numberline {1.4}背景：量子アニーリング(QA)}{7}{}%
+\contentsline {section}{\numberline {1.5}主結果}{8}{}%
+\contentsline {section}{\numberline {1.6}本論文の構成}{8}{}%
+\contentsline {chapter}{\numberline {第2章}本論}{9}{}%
+\contentsline {section}{\numberline {2.1}イジングモデル}{9}{}%
+\contentsline {section}{\numberline {2.2}SA}{10}{}%
+\contentsline {section}{\numberline {2.3}QA}{11}{}%
+\contentsline {section}{\numberline {2.4}Exact logistic regression}{12}{}%
+\contentsline {section}{\numberline {2.5}イジングマシンを用いたExact logistic regression}{13}{}%
+\contentsline {chapter}{\numberline {第3章}実験}{15}{}%
+\contentsline {section}{\numberline {3.1}実験環境}{15}{}%
+\contentsline {subsection}{\numberline {3.1.1}骨肉腫データ}{15}{}%
+\contentsline {section}{\numberline {3.2}実験結果}{16}{}%
+\contentsline {subsection}{\numberline {3.2.1}結果1: チェーン強度とチェーンの破壊割合、チェーン強度とサンプル数}{16}{}%
+\contentsline {subsection}{\numberline {3.2.2}結果2: 全列挙とSA, QAの比較}{18}{}%
+\contentsline {subsection}{\numberline {3.2.3}結果3: SAとQAにおける計算時間の比較}{19}{}%
+\contentsline {subsection}{\numberline {3.2.4}考察}{22}{}%
+\contentsline {chapter}{\numberline {第4章}おわりに}{24}{}%
+\contentsline {chapter}{参考文献}{26}{}%

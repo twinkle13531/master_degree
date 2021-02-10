@@ -1,0 +1,178 @@
+\documentclass[9pt, twocolumn]{jarticle}
+
+%\usepackage[ipaex]{pxchfon}
+\usepackage[dvipdfmx]{graphicx}
+\usepackage[dvipdfmx]{color}
+
+
+%\addtolength{\hoffset}{-0.5cm}
+%\addtolength{\textwidth}{1.20cm}
+%\addtolength{\voffset}{-1.0cm}
+%\addtolength{\textheight}{2.5cm}
+%\setlength{\parskip}{0pt}
+%\setlength{\parindent}{15pt}
+\addtolength{\columnsep}{1em}
+
+\usepackage[truedimen,margin=25truemm]{geometry}
+
+\usepackage{amsthm}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{ascmac}
+\usepackage{bm}
+\usepackage[colorlinks = true, linkcolor = black, citecolor = black, final]{hyperref}
+
+\usepackage{graphicx}
+%\usepackage{multicol}
+%\usepackage{ marvosym }
+%\usepackage{wasysym}
+%\usepackage{tikz}
+%\usetikzlibrary{patterns}
+
+\newcommand{\ds}{\displaystyle}
+\DeclareMathOperator{\sech}{sech}
+
+
+%\setlength{\parindent}{0in}
+\usepackage{caption}
+\pagestyle{empty}
+
+%追加
+\usepackage{siunitx}
+\usepackage{booktabs}
+\usepackage{comment}
+\usepackage{lscape}
+
+
+\begin{document}
+	
+	%\thispagestyle{empty}
+	\twocolumn[
+	\begin{center}
+		\Large イジングマシンを用いた正確ロジスティック回帰
+	\end{center}
+	\begin{flushright}
+		大規模知識発見分野　津田研究室\\
+		佐藤　史歩
+	\end{flushright}
+	]
+	\section{背景}
+	ヒトゲノム全体をほぼカバーする1000万カ所以上の一塩基多型（SNP）のうち、50万～100万か所の遺伝子型を決定する方法はゲノムワイド関連解析（Genome Wide Association Study；GWAS）と呼ばれ、主にSNPの頻度と、病気や量的形質との関連を統計的に調べるために用いられている。GWASで用いられる代表的な統計モデルはロジスティック回帰であるが、現存の統計的仮説検定を行う際いくつかの問題が生じる。例えば尤度比検定など漸近論による統計解析を行う際サンプルが小さい場合には不正確になってしまったり、適合度検定にて作成した分割表が疎となる場合、最尤推定を実施することができない場合がある。それを回避する方法としてExact logistic regression（正確ロジスティック回帰）が提案されている。Exact logistic regression はCoxによって70年代に提案された手法で\cite{cox70}、パラメータの反復最適化を行わず、サンプリングによってP値計算を行う\cite{elreg}。結果、サンプル数の大きさによってP値の大きさが異なるという現象を回避することができる。しかしこの方法は計算が複雑であることが障壁となり、長年普及されてこなかった。
+	本研究ではシミュレーテッドアニーリング(SA)やD-wave量子アニーラといったイジングマシンを用いてExact logistic regressionを実現することを目的とする。骨肉腫データに適用した結果を示した後、現状の課題や今後の展望について述べる。
+	
+	\section{方法}
+	\subsection{イジングマシン、量子アニーリング}
+	イジングマシンはコヒーレントマシン（量子ニューラルネットワーク）やシミュレーテッド分岐アルゴリズムなどがあるが、量子ゲート式(QAOA)などがあるが、
+	どのイジングマシンも組み合わせ最適化問題を解く手法であり、以下のハミルトニアンの基底状態を求める問題である。
+	\begin{eqnarray}
+		H(\bm{\sigma}) = -\dfrac{1}{2}\sum_{i, j}J_{ij}\sigma_i \sigma_j
+	\end{eqnarray}
+	
+	量子アニーリングとは量子効果を用いて組合せ最適化問題を解く手法のことである。
+	組合せ最適化問題は,、エネルギーが
+	\begin{eqnarray}
+		H(\bm{\sigma}) = \sum_{i<j}J_{ij}\sigma_i \sigma_j + \sum_{i=1}^{N}h_i\sigma_i
+	\end{eqnarray}
+	\begin{eqnarray}
+		\sigma_i \in\{-1,+1\}\nonumber
+	\end{eqnarray}
+	で与えられるイジング模型の基底状態(最低エネルギー状態)を求める問題とみなすことができる。
+	ここで$\bm{\sigma}$はイジングスピンと呼ばれ, $J_{ij}$はスピン間の相互作用, $h_i$は局所磁場を調整するパラメータである.
+	量子アニーリングでは、はじめに各スピンの状態を不確定,、つまり$\pm1$を重ね合わせた状態に設定する。
+	そして,、量子効果を徐々に小さくして各スピンの状態が$\pm1$のどちらかに確定した状態が自律的に選ばれ, その状態が基底状態となる。
+	カナダのD-Wave Systems Inc.は量子アニーリングの動作原理が採用されたハードウェアを世界で初めて開発し、
+	現在ではクラウド経由で利用できるようになっている\cite{dwave}。
+	
+	\subsection{Exact logistic regression}
+	本章ではまずExact logistic regressionを説明し、その後基底状態サンプリングの適用箇所について言及する。
+	Exact logistic regressionは共変量と応答変数ベクトルとの内積値を用いた条件付き分布を用いることで、検定したい説明変数に対する正確なP値を推定することが可能である\cite{cox70}。
+	例えば共変量が$m$個$( 1\leq  j \leq m )$、独立した標本データが$n$個$( 1\leq  i \leq n )$あり、各共変量における$Ρ$値を計算することを考える.。Exact logistic regressionでは十分統計量として以下を使用する。
+	\begin{eqnarray}
+		t_0=\sum_{i=1}^n y_i\:
+		t_j=\sum_{i=1}^n x_{ij}y_i
+	\end{eqnarray}
+
+	$k$番目の共変量について、$k$番目以外の共変量を交絡因子としてΡ値を計算したい場合、まずは$t_k$以外に対して以下のように条件付けをし、条件を満たす$Y$を全列挙する。$\hat{t}_n$は元々のデータセットにおけるYに対して計算した十分統計量を表している。
+	\begin{eqnarray}
+		Y = \{y|t_0=\hat{t}_0, t_j=\hat{t}_j, {j} \neq{k}\}
+		\label{eq:sufstatistic}
+	\end{eqnarray}
+
+	式(\ref{eq:sufstatistic})を満たすすべてのYサンプルに対し$t_k$を計算し、その割合をΡ値とする。
+	\begin{eqnarray}
+		P(t_k=\hat{t}_k | t_0=\hat{t}_0,t_j=\hat{t}_j) = \dfrac{c( t_k=\hat{t}_k, t_j=\hat{t}_j)}{\sum_{u} c( t_k=u, t_j=\hat{t}_j)}\\
+		j \neq k \nonumber
+	\end{eqnarray}
+	
+	$c(\alpha=\hat{\alpha}, \beta=\hat{\beta})$は$\alpha=\hat{\alpha}, \beta= \hat{\beta}$を満たすYの個数を表している。
+	以上がExact logistic regressionの手順である。
+	
+	本研究では,条件を満たすYの全列挙過程を、基底状態サンプリングに変更した.イジングマシンにおいては, QUBO(Quadratic unconstrained binary optimization)と呼ばれる二次式で表されるエネルギー関数（ハミルトニアン）を最小化する基底状態（最適解）を発見する。基底状態が複数あるときは,その中からサンプリングを行うことができる。
+	Exact logistic regressionをイジングマシンを用いて行うには、式(\ref{eq:sufstatistic})を満たす解が基底状態になるようなハミルトニアンを設計する必要がある.ここでは以下のように設定した。
+	\begin{eqnarray}
+		\begin{split}
+			H
+			&= 2\sum_{p<q}y_py_q + (1-2\hat{t}_0)\sum y_p + \hat{t}_0^2 +\\
+			& \quad \sum_{j \neq k}(2 \sum_{p < q}x_{pj} x_{qj} y_p y_q + (1-2 \hat{t}_j) \sum y_p x_{pj} + \hat{t}_j^2)
+		\end{split}
+	\end{eqnarray}
+	
+	\section{結果}
+	実験用のデータには46サンプルをもつ単変量解析結果データである骨肉腫データを使用した\cite{ostdata}.骨肉腫データのうち特徴量は3つ使用し,20サンプル, 25サンプル,30サンプル, 35サンプル, 40サンプルを46サンプルからランダムに選択したデータをそれぞれ5つ作成した.説明変数は多変量解析にて有意性が認められた特徴量であり，特徴量に１つ含まれている. 応答変数は3年再発せず生存したか否かの二値変数である. 実験用のプログラムはPython3.7.0を用いて実装した.。
+	量子アニーラとしてD-Wave Systems Inc.のD-Wave2000QをクラウドサービスであるLeapを介して利用した。
+	まず計算時間を計測した結果を図\ref{fig:total_time}に示す。
+
+	40bitに至るまでサンプル獲得と時間計測が可能であったSAとQAを比較すると、QA のほうが計算時間が短いことがわかる。
+	%さらに図\ref{fig:SA_QA_total_time}からより詳細に結果を観察すると、QAはデータサイズが大きくなるほどSAよりも短時間で計算ができることがわかる。
+	さらに表\ref{tb:sampling_time_SA_QA}からより詳細に結果を観察すると、QAはデータサイズが大きくなるほどSAよりも短時間で計算ができることがわかる。
+
+	\begin{figure}
+		\begin{center}
+			\includegraphics[scale=0.6]{/Users/shihosato/Dropbox/sato_brief_tex/auto_summary/_30bit_40bit_total_calculation_time_mean_std_log.png}
+		\end{center}
+		\caption{計算時間の比較}
+		\label{fig:total_time}
+	\end{figure}
+
+%	\begin{figure}
+%		\begin{center}
+%			\includegraphics[scale=0.6]{/Users/shihosato/Dropbox/sato_brief_tex/auto_summary/_40bit_total_calculation_time_mean_std.png}
+%		\end{center}
+%		\caption{計算時間の比較　(SA, QA)}
+%		\label{fig:SA_QA_total_time}
+%	\end{figure}
+
+
+\begin{table}[hbtp]
+	\caption{SAとQAにおけるサンプリング時間}
+	\label{tb:sampling_time_SA_QA}
+	\centering
+	\begin{tabular}{lccccc}
+		\hline
+		& \multicolumn{5}{c}{データサイズ [sec]}\\
+		手法& 20bit & 25bit & 30bit & 35bit & 40bit\\
+		\hline\hline
+		SA & $3.73$ & $5.08$ & $6.70$ & $8.36$ & $1.02\times 10^{1}$\\
+		\hline
+		QA & $2.40$ & $2.40$ & $2.40$ & $2.40$ & $2.40$\\
+		\hline
+		SA / QA & $1.55$ & $2.12$ & $2.53$ & $3.48$ & $4.26$\\
+		\hline
+	\end{tabular}
+\end{table}
+	
+	
+	\section{考察と今後の課題}
+	表\ref*{tb:comp_time}より様々なサンプリング手法にて実験した結果,、QAを用いて行なった結果が,、もっとも最短で解を検出できたことが分かった。
+	古典アニーリングとして知られているSAと比較しても、80倍-1189倍速く計算できている。
+	今後の課題として、 選択的推論への展開、他のイジングマシンへの展開などが挙げられる。
+	
+	\begin{thebibliography}{9}
+		\bibitem{cox70}Cox, D. R. "Analysis of Binary Data" \textit{Methuen}(1970).
+		\bibitem{elreg}Mehta, Cyrus R., and Nitin R. Patel. "Exact logistic regression: theory and examples." \textit{Statistics in medicine} 14.19 (1995): 2143-2160.
+		\bibitem{qasampling}Benedetti, Marcello, et al. "Estimation of effective temperatures in quantum annealers for sampling applications: A case study with possible applications in deep learning." \textit{Physical Review A} 94.2 (2016): 022308.
+		\bibitem{dwave}Johnson, Mark W., et al. "Quantum annealing with manufactured spins." \textit{Nature} 473.7346 (2011): 194.
+		\bibitem{ostdata}Jaffe, Norman, et al. "Osteosarcoma: Intra‐arterial treatment of the primary tumor with cis‐diammine‐dichloroplatinum II (CDP): Angiographic, pathologic, and pharmacologic studies." \textit{Cancer} 51.3 (1983): 402-407.
+	\end{thebibliography}
+\end{document}
+

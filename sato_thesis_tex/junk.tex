@@ -1,0 +1,496 @@
+@misc{qpu_access_time,
+	author = {D-wave},
+	title = {Breakdown of QPU Access Time},
+	howpublished = {https://docs.dwavesys.com/docs/latest/timing_qa_cycle_time.html},
+	note = {2020-01-06参照}
+}
+
+\section{背景：ゲノムワイド関連解析とロジスティック回帰}
+2003年にヒトゲノム計画が完了して以来、ゲノム配列の個人差と形質との関連についての研究が急速に進み、特に単一遺伝子疾患の原因遺伝子を探索する方法としてpositional cloningが多用されてきた。これは1980年代に開発された、多型マーカーを目印に、疾患原因遺伝子と多型マーカーが同じ染色体上にある状態（連鎖）を見つけ出し、疾患原因遺伝子の位置と配列を段階的に突き止めていく手法である\cite{yano2016genome}。ところが実際は単一あるいは数個の遺伝子の異常のみで説明の付く病気はわずかで、大半が複数の遺伝子に少しずつ影響されることで発症する多因子疾患だと判明してきたため、ゲノム全体を巨視的に見渡す手法として、ゲノムワイド関連解析（Genome Wide Association Study; GWAS）が用いられるようになった。
+
+GWASは特定の疾患の非血縁の患者集団と非血縁の健常対照集団との間で、有意に関連する遺伝マーカーをゲノム全域にわたって網羅的に検索する手法である\cite{yano2016genome}。遺伝マーカーには遺伝的多様性を表す一塩基多型(single nucleotide polymorphism; SNP)が使われている。2005年に加齢黄斑変性を対象としたGWASが行われて以来、現在までに4800を超える論文、24万を超える形質との関連が発見されている\cite{gwasCatalog}。統計モデルとしてロジスティック回帰を適用することが多い\cite{duverle2015privacy}。
+
+ロジスティック回帰は一般化線形モデルのひとつであり、一般化線形モデルは一般線形モデルを拡張した概念である。一般線形モデル（Ordinary Linear Model）は応答変数が量的データであり、説明変数と応答変数の間の線形関係を仮定している。応答変数は正規分布に従い、その平均は説明変数の一次結合で表される。しかし現実世界には線形関係で表すことのできない事象もある。そこで応答変数が質的データであっても分析可能にしたのが一般化線形モデルである。一般化線形モデル（Generalized Linear Model）は一般線形モデルと異なり、指数型分布など正規分布以外に従う応答変数を予測する際にも使われる。説明変数との関係を推計ため、一般化線形モデルではlink関数を用いて変換した応答変数を用いる。Link関数とは応答変数を説明変数と線形関係になるよう変換する関数である。このような一般化線形モデルで最も使われている手法がロジスティック回帰である。
+
+ロジスティック回帰は、link関数にロジットを用いる。結果応答変数は必ず0-1の間となるため、確率を表す際に適している。例えば、ある事件(event)が発生するか否かをロジスティック回帰モデルに当てはめると、その事件が発生する確率を予測することとなる。分析した結果、応答変数の値、すなわち確率が0.5より大きいとその事件が発生すると予測し、0.5を下回るとその事件が発生しないと予測する。
+%ロジスティック分析における説明変数と応答変数との関係を示すとシグモイド曲線と呼ばれるS字形の曲線になる。
+
+パラメータ推定の方法も一般線形モデルと一般化線形モデルでは異なる。一般線形モデルでは最小二乗法を用いてパラメータ推定を行う。最小二乗法は実測値と予測値の差である残差（residuals）の二乗和が最小になるパラメータを推定する方法である。これは、誤差は等分散正規分布となっているため、説明変数が1単位変化した際に応答変数がどのぐらい変化したのかを把握することが可能であることを利用している。一方ロジスティック回帰を含めた一般化線形モデルでは、最小二乗法を用いることができない。応答変数が質的データであるゆえ、説明変数との間に線形関係が存在せず、説明変数が1単位変化した際に被説明変数がどのぐらい変化したのかを把握することが難しいためである。従って、ロジスティック分析では最尤推定法 (Maximum Likelihood Estimation) という別の手段でパラメータ推定を行う。最尤推定はパラメータを変数、説明変数を定数とし、実測値が得られる最大の確率を知る手法である。
+
+尤度比検定は最尤推定量を入れた尤度関数を用いて、帰無仮説の棄却を行う統計検定である。まず、帰無仮説に対する最尤推定量、対立仮説に対する最尤推定量それぞれを求める。次にそれぞれを尤度関数に代入し、その比をとる。ここで得られた比が、漸近的には自由度$(H_0 - H_1)$の$χ$二乗分布に従うことを利用したのが尤度比検定である\cite{kubo}。
+
+ロジスティック回帰は最尤推定と尤度比検定を用いて統計解析を行うが、問題を抱えている。まず尤度比検定はサンプル数が大きいことを想定した検定であるため、サンプルが小さい場合に不正確になってしまうという問題がある。また、独立性について検定するため分割表を使用する際、疎であると最尤推定ができない場合も多い。偏りの大きいデータに対しても正確に検定を行うことが難しい\cite{10.2307/2288420, 10.2307/2289388, mehta1998exact, mehta1995exact,10.1198/00031300283}。それらの問題を回避する方法の一つとして正確ロジスティック回帰が提案されている。
+
+
+
+
+%"The Sequence of the Human Genome"
+
+%多型マーカーを目印に「病気の原因遺伝子と多型マーカーが、同じ染色体上にある状態（連鎖という）」を見つけ出して、原因遺伝子の位置と配列を段階的に突き止めていく
+%This process is initiated by mapping the responsible gene to its location on a chromosome linked to the disease.
+
+@article{xu2000positional,
+	title={Positional cloning},
+	author={Xu, Lin and Li, Yefu},
+	journal={Developmental Biology Protocols: Volume II},
+	pages={285-296},
+	year={2000},
+	publisher={Springer}
+}
+
+2003年にヒトゲノム計画が完了して以来、ゲノム配列の個人差と形質との関連についての研究が急速に進み、特に単一遺伝子疾患の原因遺伝子を探索する方法としてポジショナル・クローニングが多用されてきた。ところが単一あるいは数個の遺伝子の異常のみで説明の付く病気はわずかで、大半が複数の遺伝子に少しずつ影響されることで発症する多因子疾患であるため、従来の手法ではその解析は困難となった。そこで、これまでされてきた特定の狭い領域の解析に加え、ゲノム全体を巨視的に見渡す必要性から、ゲノムワイド関連解析（Genome Wide Association Study；GWAS）が用いられるようになった。
+
+GWASは遺伝的多様性を代表するSNPを位置マーカーとして用い、特定の病気と関連のあるSNPを見つけ出して、その近傍に存在すると推測される感受性遺伝子をリスト化していく手法である。複数の感受性遺伝子を原因とする病気の場合、相当数の遺伝子の作用が累積することで、それなりの大きさの発症リスクをもたらすと考えられている。統計モデルとしてロジスティック回帰を適用することが多い\cite{duverle2015privacy}。
+
+\begin{table}[H]
+	\caption{イジングマシンの製品比較}
+	\label{tb:ising_machine}
+	\begin{minipage}{0.3\hsize}
+		\begin{tabular}{lcccc}
+			&\multicolumn{4}{c}{シミュレーテッドアニーリング方式イジングマシン} \\
+			& 富士通 & 日立 & TOSHIBA & NEC\\
+			\hline\hline
+			製品名 & デジタルアニーラ & CMOSアニーリング & シュミレーテッド分岐マシン & SX-Aurora TSUBASA\\
+			ステータス & 商品化 & 商品化 & 商品化 & 商品化\\
+			実装方式 & ASIC & GPU/ASIC・FPGA & HWに非依存 & ベクトル計算機\\
+			規模 & 8, 192 & 100, 000 & 100, 000 & 100, 000 \\
+			結合の仕方 & 全結合 & 全結合/疎結合 & 全結合 & 全結合\\
+			\hline
+		\end{tabular}
+	\end{minipage}
+	\vspace{0.5in} \\
+	\begin{minipage}{0.3\hsize}
+		\begin{tabular}{lcc}
+			&\multicolumn{2}{c}{量子アニーリング方式イジングマシン} \\
+			& D-wave & 産総研 \\
+			\hline\hline
+			製品名 & D-wave 2000Q & 未公開\\
+			ステータス & 商品化 & 研究開発中\\
+			実装方式 & 超電導回路 & 超電導回路\\
+			規模 & 2, 048 & 未公開\\
+			結合の仕方 & 隣接結合 & 未公開\\
+			\hline
+		\end{tabular}
+	\end{minipage}
+	\vspace{0.5in} \\
+	\begin{minipage}{0.3\hsize}
+		\centering
+		\begin{tabular}{lc}
+			&レーザー方式イジングマシン \\
+			& NTT\\
+			\hline\hline
+			製品名 & コヒーレントイジングマシン\\
+			ステータス & 研究開発中\\
+			実装方式 & レーザー + FPGA\\
+			規模 & 2,000\\
+			結合の仕方 & 全結合\\
+			\hline
+		\end{tabular}
+	\end{minipage}
+\end{table}
+
+
+\begin{landscape}
+	\begin{table}[hbtp]
+		\caption{イジングマシンの製品比較}
+		\label{tb:ising_machine}
+		\scalebox{0.7}[0.8]{
+			\centering
+			\begin{tabular}{lccccccc}
+				\hline
+				&\multicolumn{7}{c}{イジング方式} \\
+				&\multicolumn{2}{c}{量子アニーリング} &\multicolumn{4}{c}{シミュレーション} & レーザー\\
+				& D-wave & 産総研 & 富士通 & 日立 & TOSHIBA & NEC & NTT \\
+				\hline\hline
+				製品名 & D-wave 2000Q & 未公開 & デジタルアニーラ & CMOSアニーリング & シュミレーテッド分岐マシン & SX-Aurora TSUBASA & コヒーレントイジングマシン\\
+				ステータス & 商品化 & 研究開発中 & 商品化 & 商品化 & 商品化 & 商品化 & 研究開発中\\
+				実装方式 & 超電導回路 & 超電導回路 & ASIC & GPU/ASIC・FPGA & HWに非依存 & ベクトル計算機 & レーザー + FPGA\\
+				規模 & 2, 048 & 未公開 & 8, 192 & 100, 000 & 100, 000 & 100, 000 & 2,000\\
+				結合の仕方 & 隣接結合 & 未公開 & 全結合 & 全結合/疎結合 & 全結合 & 全結合 & 全結合\\
+				\hline
+			\end{tabular}
+		}
+	\end{table}
+\end{landscape}
+
+\centering
+\subfloat[qa_machine]{\includegraphics[clip, width=3.0in]{figure-name-A}
+	\label{tb:qa_machine}}
+\\
+\subfloat[sa_machine]{\includegraphics[clip, width=3.0in]{figure-name-B}
+	\label{tb:sa_machine}}
+\\
+\subfloat[laser_machine]{\includegraphics[clip, width=3.0in]{figure-name-C}
+	\label{tb:laser_machine}}
+
+\caption{イジングマシンの製品比較}
+\label{tb:ising_machine}
+
+\begin{figure}[H]
+	\begin{center}
+		\includegraphics[width=130mm]{./figure/QA/broken_chain_proportion.png}
+	\end{center}
+	\caption{チェーン強度とチェーンの破壊割合}
+	\label{fig:broken}
+\end{figure}
+
+\begin{landscape}
+	\begin{table}[hbtp]
+		\caption{イジングマシンの製品比較}
+		\label{tb:laser_machine}
+		\scalebox{0.7}[0.8]{
+			\centering
+			\begin{tabular}{lccccccc}
+				\hline
+				&\multicolumn{7}{c}{イジング方式} \\
+				&\multicolumn{2}{c}{量子アニーリング} &\multicolumn{4}{c}{シミュレーション} & レーザー\\
+				& D-wave & 産総研 & 富士通 & 日立 & TOSHIBA & NEC & NTT \\
+				\hline\hline
+				製品名 & D-wave 2000Q & 未公開 & デジタルアニーラ & CMOSアニーリング & シュミレーテッド分岐マシン & SX-Aurora TSUBASA & コヒーレントイジングマシン\\
+				ステータス & 商品化 & 研究開発中 & 商品化 & 商品化 & 商品化 & 商品化 & 研究開発中\\
+				実装方式 & 超電導回路 & 超電導回路 & ASIC & GPU/ASIC・FPGA & HWに非依存 & ベクトル計算機 & レーザー + FPGA\\
+				規模 & 2, 048 & 未公開 & 8, 192 & 100, 000 & 100, 000 & 100, 000 & 2,000\\
+				結合の仕方 & 隣接結合 & 未公開 & 全結合 & 全結合/疎結合 & 全結合 & 全結合 & 全結合\\
+				\hline
+			\end{tabular}
+		}
+	\end{table}
+\end{landscape}
+
+
+\begin{minipage}{0.3\textheight}
+	\begin{table}[hbtp]
+		\caption{シミュレーテッドアニーリング方式イジングマシン}
+		\label{tb:sa_machine}
+		\centering
+		\begin{tabular}{lcccc}
+			\hline
+			&\multicolumn{4}{c}{企業名} \\
+			& 富士通 & 日立 & TOSHIBA & NEC\\
+			\hline\hline
+			製品名 & デジタルアニーラ & CMOSアニーリング & シュミレーテッド分岐マシン & SX-Aurora TSUBASA\\
+			ステータス & 商品化 & 商品化 & 商品化 & 商品化\\
+			実装方式 & ASIC & GPU/ASIC・FPGA & HWに非依存 & ベクトル計算機\\
+			規模 & 8, 192 & 100, 000 & 100, 000 & 100, 000 \\
+			結合の仕方 & 全結合 & 全結合/疎結合 & 全結合 & 全結合\\
+			\hline
+		\end{tabular}
+	\end{table}
+\end{minipage}
+\begin{minipage}{0.3\textheight}
+	\begin{table}[hbtp]
+		\caption{レーザー方式イジングマシン}
+		\label{tb:laser_machine}
+		\centering
+		\begin{tabular}{lc}
+			\hline
+			&企業名 \\
+			& NEC\\
+			\hline\hline
+			製品名 & コヒーレントイジングマシン\\
+			ステータス & 研究開発中\\
+			実装方式 & レーザー + FPGA\\
+			規模 & 2,000\\
+			結合の仕方 & 全結合\\
+			\hline
+		\end{tabular}
+	\end{table}
+\end{minipage}
+
+\begin{eqnarray}
+	s_p \rightarrow s'_p &=& -s_p \\ \nonumber
+	h_p \rightarrow h'_p &=& -h_p \\ \nonumber
+	J_{i,j} \rightarrow J'_{i,j} &=&-J_{i,j}　\\ \nonumber
+	\mbox{for either $i=p$ or $j=p$}
+\end{eqnarray}
+
+
+この原因は複数あり、総称して統合制御エラー(ICE)というようだ。
+今回、ICEの一つとして、背景磁化率を挙げる。
+
+アニーリングプロセスにおいてすべてのイジングスピンは、問題のハミルトニアンに捉えられていない、結合によって接続されているスピンに対するカプラーのような効果を持っている。
+この効果は主に以下の２つの形態を持っている。
+\begin{itemize}
+	\item スピン$i$は接続されたスピンのペアの間にNex-nearest neighbor(NNN)結合を誘発する
+	\item スピン$i$に印加されたバイアス$h$が接続されたスピンにリークする。
+\end{itemize}
+%また、統合制御エラー(ICE)が生じてしまう点についてD-Wave Systems Inc.が公表している。
+%ICEとは問題表現の忠実度を下げる原因の総称である。ユーザーは$h$$j$を指定することができるが、D-wave QPUにこれらの値を実装すると、
+%実際は以下の式\ref{eq:ice}のようにわずかに変更された問題を解く。
+
+%全結合でないことで起こるのは、オーバーヘッド。物理量子ビットの無駄遣いをしてしまうということ
+
+
+
+\begin{table}[hbtp]
+	\caption{SAとQAにおけるサンプリング時間}
+	\label{tb:sampling_time_SA_QA}
+	\centering
+	\begin{tabular}{lccccc}
+		\hline
+		& \multicolumn{5}{c}{データサイズ [sec]}\\
+		手法& 20bit & 25bit & 30bit & 35bit & 40bit\\
+		\hline\hline
+		SA & $3.73$ & $5.08$ & $6.70$ & $8.36$ & $1.02\times 10^{1}$\\
+		\hline
+		QA & $2.40$ & $2.40$ & $2.40$ & $2.40$ & $2.40$\\
+		\hline
+		SA / QA & $1.55$ & $2.12$ & $2.53$ & $3.48$ & $4.26$\\
+		\hline
+	\end{tabular}
+\end{table}
+
+
+
+\begin{figure}
+	\begin{center}
+		\includegraphics[width=130mm]{.figure/auto_summary/_30bit_40bit_total_calculation_time_mean_std_log.png}
+	\end{center}
+	\caption{計算時間の比較}
+	\label{fig:total_time}
+\end{figure}
+
+\subsection{結果4: p値の比較}
+p値について得られた結果を図\ref{fig:p_value}に示す。
+全列挙手法が30bitまでしか実施できなかったので、　すべての手法において30bitまでの結果を示す。
+具体的な数値は\ref{tb:p_value}に示す。
+ランダムサンプリングは20bit以外$\hat{t}_k \le t_k$となるサンプルを得られていないことがわかる。
+表\ref{tb:enu_p_value}, 図\ref{fig:enu_p_value}には、全列挙と他の手法との平均の差を示した。
+
+
+\begin{figure}
+	\begin{center}
+		\includegraphics[width=130mm]{./figure/auto_summary/_30bit_p_mean.png}
+	\end{center}
+	\caption{p値の比較}
+	\label{fig:p_value}
+\end{figure}
+
+\begin{table}[hbtp]
+	\caption{p値の比較}
+	\label{tb:p_value}
+	\centering
+	\begin{tabular}{lccc}
+		\hline
+		& \multicolumn{3}{c}{データサイズ [sec]}\\手法& 20bit & 25bit & 30bit \\
+		\hline\hline
+		全列挙 & $0.292$ & $0.141$ & $0.148$ \\
+		ランダムサンプリング & $0.40$ & $0.$ & $0.$ \\
+		SA & $0.292$ & $0.138$ & $0.145$ \\
+		QA & $0.294$ & $0.128$ & $0.166$ \\
+		\hline
+	\end{tabular}
+\end{table}
+
+\begin{table}[hbtp]
+	\caption{全列挙とのp値の比較}
+	\label{tb:enu_p_value}
+	\centering
+	\begin{tabular}{lccc}
+		\hline
+		& \multicolumn{3}{c}{データサイズ [sec]}\\
+		手法& 20bit & 25bit & 30bit \\
+		全列挙 & $0.292$ & $0.141$ & $0.148$ \\
+		\hline\hline
+		ランダムサンプリング & $+0.108$ & $-0.141$ & $-0.148$ \\
+		SA & $0.$ & $-0.003$ & $-0.003$ \\
+		QA & $+0.002$ & $-0.013$ & $+0.018$ \\
+		\hline
+	\end{tabular}
+\end{table}
+
+\begin{figure}
+	\begin{center}
+		\includegraphics[width=130mm]{./figure/auto_summary/_30bit_p_value_enu_diff.png}
+	\end{center}
+	\caption{全列挙とのp値の比較}
+	\label{fig:enu_p_value}
+\end{figure}
+
+
+
+diff_p_mean = 
+{'SA': {20: 0.00042059548610688945,
+		25: 0.004261017870453532,
+		30: 0.006113122582364371},
+	'QA': {20: 0.0688522885677143,
+		25: 0.04584363094719477,
+		30: 0.06262996777167275}}
+
+mean_time30= 
+{'enumeration': array([1.2240000e+00, 5.8391400e+02, 5.4774806e+04]),
+	'random': array([0.16080585, 0.08665872, 0.09262717]),
+	'SA': array([4.2507319 , 5.84283385, 7.57952614]),
+	'QA': array([2.4003082, 2.4003524, 2.4004156])}
+
+mean_valid_y_num30 = 
+{'enumeration': array([  4424.8,  27893.6, 302494.2]),
+	'random': array([43.        , 10.66666667,  2.75      ]),
+	'SA': array([2600. , 6477.6, 9210.8]),
+	'QA': array([204.4,  91. ,  82. ])}
+
+diff_time =
+{'QA': {20: {0: 2.439688,
+			1: -2.380347,
+			2: -2.1703289999999997,
+			3: -2.020261,
+			4: -1.750292},
+		25: {0: 3.069638,
+			1: 2891.909656,
+			2: 1.7896680000000007,
+			3: -2.17036,
+			4: 12.969636},
+		30: {0: 120014.599553,
+			1: 102.74959600000001,
+			2: 12789.639604000002,
+			3: 723.389632,
+			4: 140231.649537}},
+	'SA': {20: {0: 0.4097269439697264,
+			1: -4.220472793579102,
+			2: -3.894181032180786,
+			3: -3.8328698825836183,
+			4: -3.5958627223968507},
+		25: {0: -0.30262997627258326,
+			1: 2888.2907028770446,
+			2: -1.6651039695739742,
+			3: -5.677823085784912,
+			4: 9.71068489074707},
+		30: {0: 120009.20876383781,
+			1: 97.70566906929017,
+			2: 12784.553617277146,
+			3: 718.3613510513305,
+			4: 140226.30296807288}}}
+		
+diff_p = 
+{'SA': {20: {0: -0.0016251661081381208,
+			1: 0.0,
+			2: -0.0002039983680130475,
+			3: 0.000273812954383279,
+			4: 0.0},
+		25: {0: 0.00034213098729227176,
+			1: -0.0030891633385588257,
+			2: 0.005539024547086102,
+			3: 0.0,
+			4: -0.012334770479330459},
+		30: {0: 0.0019733726651596437,
+			1: 0.01926401915670828,
+			2: 0.005122754025624815,
+			3: 0.0003054739711871174,
+			4: 0.0038999930931419985}},
+	'QA': {20: {0: -0.057536876136593224,
+			1: -0.05520361990950223,
+			2: -0.0899795501022495,
+			3: 0.11942601207484196,
+			4: -0.022115384615384592},
+		25: {0: -0.011904761904761904,
+			1: -0.0020227349531538458,
+			2: 0.010204081632653073,
+			3: 0.15743440233236153,
+			4: -0.047652173913043494},
+		30: {0: -0.04630911835522787,
+			1: 0.10219987853431409,
+			2: 0.00841107489415907,
+			3: 0.11007532956685499,
+			4: 0.04615443750780772}}}
+
+
+\begin{table}[hbtp]
+	\caption{有効サンプル数の比較}
+	\label{tb:sample_num}
+	\centering
+	\begin{tabular}{lccccc}
+		\hline
+		&\multicolumn{5}{c}{データサイズ} \\
+		手法& 20 & 25 & 30 & 35 & 40 \\
+		\hline\hline
+		全列挙 & $4.42\times 10^{3}$ & $2.79\times 10^{4}$ & $3.02\times 10^{5}$ & & - \\
+		SA & $2.60\times 10^{3}$ & $6.46\times 10^{3}$ & $9.22\times 10^{3}$ & $9.62\times 10^{3}$ & $9.66\times 10^{3}$ \\
+		QA & $2.91\times 10^{2}$ & $1.21\times 10^{2}$ & $8.24\times 10^{2}$ & $1.78\times 10^{1}$ & $8$ \\
+		\hline
+	\end{tabular}
+\end{table}
+
+
+
+擬似コードをAlgorithm\ref{algo:qaelr}に示す。
+
+{\scriptsize
+	\begin{algorithm}
+		\caption{量子アニーリングを用いたExact logistic regression}
+		\label{algo:qaelr}
+		\begin{algorithmic}
+			\Require{入力データ$\mathbf{Y} =[y_1,  \dots , y_i,  \dots, y_n], \mathbf{X} = [\mathbf{X}_1, \dots , \mathbf{X}_j, \dots , \mathbf{X}_m]$}
+			\Ensure{検定結果}
+			\State $X_k \leftarrow$ 検定したい特徴量
+			\State $\hat{t}_0 \leftarrow$ Yに関する十分統計量
+			\State $\hat{t}_k \leftarrow$ $X_k$に関する十分統計量
+			\State $\hat{t}_j \leftarrow$ $X_k$以外の共変量に関する十分統計量
+			\State $H \leftarrow$ QUBO形式の目的関数
+			
+			\Procedure{\textsf{QA}}{$H$}
+			\State {$H$を量子アニーラへ入力し、QAを行う}
+			\State \textbf{return} $R(=numreads)$個のYベクトル$sampleY_1, \dots, sampleY_r, \dots, sampleY_R$
+			\EndProcedure
+			
+			\Procedure{\textsf{SELECT\_VALID\_Y}}{$sampleY_1, \dots, sampleY_r, \dots, sampleY_R$}
+			\State $validYlist= []$
+			\For{$r = 1, \dots, R$}
+			\If{$sampleY_r$に含まれる要素の和  $== \hat{t}_0$}
+			\If{$sampleY_r$と$ \mathbf{X}_j$の内積 $== \hat{t}_j$}
+			\State $append(validYlist, sampleY_r)$
+			\EndIf
+			\EndIf
+			\EndFor
+			\State \textbf{return} $validYlist$
+			\EndProcedure
+			
+			\newpage
+			\Procedure{\textsf{CALCULATE\_P}}{$validYlist$}
+			\State $S  \leftarrow validYlist$に入っているYベクトルの数
+			\State $sampleY_s \leftarrow validYlist$に含まれるYベクトル($s= 1, \dots , S$)
+			\State $samplecount \leftarrow 0$
+			\For{$s= 1, \dots , S$}
+			\If{$sampleY_s$と$\mathbf{X}_k$の内積$== \hat{t}_k$}					
+			\State $samplecount \leftarrow  samplecount + 1$
+			\EndIf
+			\EndFor
+			\State $p \leftarrow samplecount/S$
+			\State \textbf{return}$p$
+			\EndProcedure
+			
+			\Procedure{\textsf{STATICAL\_HYPOTHESIS\_TESTING}}{$p$}
+			\If{$p < \alpha$}
+			\State 検定結果 $\leftarrow$ "帰無仮説を棄却する"
+			\Else
+			\State 検定結果 $\leftarrow$ "帰無仮説を棄却する"とする
+			\EndIf
+			\State \textbf{return}検定結果
+			\EndProcedure
+		\end{algorithmic} 
+	\end{algorithm}
+}
+
+
+\subsection{結果5:46bitでの比較}
+\ref{46bit_SA_QA}に46bitデータにて測定した結果を示す。
+
+%データの出典によると、今回説明変数として採用してる特徴量「リンパ球浸潤の有無」は単変量解析の結果p値0.006となるようだ\cite{jaffe1983osteosarcoma}。
+%\cite{mehta2000efficient}にあるように、そもそも従来の最尤推定が不正確であるという話から始まっているから、最尤推定のp値と比較したところで...。同じELRで、全列挙と比較するなら意味があると思う。
+
+\begin{table}[hbtp]
+	\caption{46bitでの比較(SA, QA)}
+	\label{tb:46bit_SA_QA}
+	\centering
+	\begin{tabular}{lcc}
+		\hline
+		& \multicolumn{2}{c}{手法}\\
+		計測項目& SA& QA\\
+		\hline\hline
+		サンプル数& $9.46\times 10^{3}$ & $0$ \\
+		\hline
+		計算時間 & $1.27\times 10^{1}$ & $0.25$ \\
+		\hline
+		p値 & $0.04$ & $0.$ \\
+		\hline
+	\end{tabular}
+\end{table}

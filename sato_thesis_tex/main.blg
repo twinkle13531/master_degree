@@ -1,0 +1,58 @@
+This is pBibTeX, Version 0.99d-j0.33 (utf8.euc) (TeX Live 2020)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: main.aux
+The style file: plain.bst
+Database file #1: ref.bib
+Warning--to sort, need author or key in 10.2307/2289388
+Name 1 in "Alipour, Elham, Clemens Adolphs, Arman Zaribafiyan, and Maxwell Rounds" has a comma at the end for entry 1qbit_
+while executing---line 1049 of file plain.bst
+Too many commas in name 1 of "Alipour, Elham, Clemens Adolphs, Arman Zaribafiyan, and Maxwell Rounds" for entry 1qbit_
+while executing---line 1049 of file plain.bst
+Warning--empty author in 10.2307/2289388
+Name 1 in "Alipour, Elham, Clemens Adolphs, Arman Zaribafiyan, and Maxwell Rounds" has a comma at the end for entry 1qbit_
+while executing---line 1090 of file plain.bst
+Too many commas in name 1 of "Alipour, Elham, Clemens Adolphs, Arman Zaribafiyan, and Maxwell Rounds" for entry 1qbit_
+while executing---line 1090 of file plain.bst
+You've used 32 entries,
+            2118 wiz_defined-function locations,
+            700 strings with 10221 characters,
+and the built_in function-call counts, 11041 in all, are:
+= -- 1023
+> -- 685
+< -- 1
++ -- 277
+- -- 242
+* -- 825
+:= -- 1913
+add.period$ -- 106
+call.type$ -- 32
+change.case$ -- 210
+chr.to.int$ -- 0
+cite$ -- 34
+duplicate$ -- 317
+empty$ -- 791
+format.name$ -- 242
+if$ -- 2220
+int.to.chr$ -- 0
+int.to.str$ -- 32
+missing$ -- 23
+newline$ -- 171
+num.names$ -- 62
+pop$ -- 253
+preamble$ -- 1
+purify$ -- 180
+quote$ -- 0
+skip$ -- 217
+stack$ -- 0
+substring$ -- 547
+swap$ -- 38
+text.length$ -- 1
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 124
+warning$ -- 2
+while$ -- 90
+width$ -- 34
+write$ -- 348
+is.kanji.str$ -- 0
+(There were 4 error messages)
